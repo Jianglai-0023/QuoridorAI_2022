@@ -3,16 +3,13 @@
 #include <vector>
 #include<cstdlib>
 #include<unordered_map>
+#include<map>
 extern int ai_side;
 std::string ai_name = "random_swim";
 const int CIRCLE = 1000;
-struct node {
-    bool isexpanded;//被完全拓展
-    int Q;
-    int N;
-    int UFT;
-//    std::vector<int> UFT;
-};
+const int SIMULATION=1000;
+using ull=unsigned long;
+
 const int dx[4]{0, 1, 0, -1};
 const int dy[4]{1, 0, -1, 0};
 struct poi{
@@ -25,6 +22,27 @@ public:
     bool b[17][17];
     int board_num=10;
     std::pair<int, std::pair<int, int> > action;
+    bool operator==(const State &opt)const{
+        for(int i = 0; i < 17; ++i){
+            for(int j = 0; j < 17; ++j){
+                if(b[i][j]!=opt.b[i][j])return false;
+            }
+        }
+        if(s0_index!=opt.s0_index)return false;
+        if(s1_index!=opt.s1_index)return false;
+        if(board_num!=opt.board_num)return false;
+        return true;
+    }
+    void operator=(const State &s){
+        for(int i = 0; i < 17; ++i){
+            for(int j = 0; j < 17; ++j){
+                b[i][j]=s.b[i][j];
+            }
+        }
+        s0_index=s.s0_index;
+        s1_index=s.s1_index;
+        board_num=s.board_num;
+    }
     State(){
         s0_index= std::make_pair(16,8);
         s1_index=std::make_pair(0,8);
@@ -34,7 +52,6 @@ public:
             }
         }
     }
-
     bool add_board(std::pair<int, std::pair<int, int> > loc) {//保证这里放入的board一定合法
         int x = 2 * loc.second.first + 1;
         int y = 2 * loc.second.second + 1;
@@ -52,6 +69,31 @@ public:
         else return false;
     }
 } state;
+struct Node {
+    bool isexpanded=false;//被完全拓展
+    int Q;
+    int N;
+    int UCT=0;
+    bool ismet=false;//是否访问过
+    int unexpand_num=0;
+    State prefer_son;
+    std::vector<State> son;
+};
+struct Hash{
+   std::size_t operator ()(const State &t)const{
+       std::size_t hash_result = ((233ull * (t.s0_index.first + 1) + (t.s0_index.second + 1))*233ull+t.s1_index.first+1)*233ull+t.s1_index.second+1;
+       for (int i = 0; i < 17; ++i)
+           for (int j = 0; j < 17; ++j)
+               hash_result = (hash_result * 233ull + t.b[i][j] + 1);
+           return hash_result;
+   }
+};
+struct Equal{
+    bool operator()(const State &a, const State &b) const {
+        return a == b;
+    }
+};
+std::unordered_map<State,Node,Hash> tree;
 //init function is called once at the beginning
 bool bfs(std::pair<int,std::pair<int,int>> board){
     int x = 2 * board.second.first + 1;
@@ -144,24 +186,19 @@ bool bfs(std::pair<int,std::pair<int,int>> board){
     if(!flag||!flag2)return false;
     return true;
 }
-class Monte_Tree {
-public:
-
-} monte_tree;
 void init() {
     for (int i = 0; i < 17; ++i) {
         for (int j = 0; j < 17; ++j) {
             state.b[i][j] = 0;
         }
     }
-    monte_tree.head = new node();
 }
 
 std::pair<int,int> map_node(std::pair<int,int> loc){
     return std::make_pair(loc.first*2,loc.second*2);
 }
 
-std::vector<State> next_step(const State &s,bool ai_side){//zero 即为s0走
+std::vector<State> next_step(const State &s){//zero 即为s0走
     std::vector<State> v;
     State S=s;
 //    std::cerr<<state.s1_index.first << '@'<<state.s1_index.second;
@@ -342,31 +379,8 @@ std::vector<State> next_step(const State &s,bool ai_side){//zero 即为s0走
       return v;
 }
 
-void Selection() {
-
-}
-
-void Expansion() {
-
-}
-
-void Play_out() {
-
-}
-
-void Backpropation() {
-
-}
-
-std::pair<int, std::pair<int, int>> Monte_tree_search(State now_state) {
-    for (int i = 0; i < CIRCLE; ++i) {
-      Selection();
-      Expansion();
-      Play_out();
-      Backpropation();
-    }
-}
-void change_state(std::pair<int, std::pair<int, int> > loc){
+std::pair<int, std::pair<int, int> > change_state(std::pair<int, std::pair<int, int> > loc){
+    tree.erase(state);
     if(!loc.first){
         if(!ai_side){
             state.s0_index.first=loc.second.first*2;
@@ -380,8 +394,88 @@ void change_state(std::pair<int, std::pair<int, int> > loc){
     else{
         state.add_board(loc);
     }
+    return loc;
 }
+class Monte_Tree {
+public:
+    double cal_UCT(double Ni,double Qi,double N){
+        return (Qi/Ni)+1.41*pow(log(N)/Ni,0.5);
+    }
+    std::pair<int,double> Selection(const State &s,int N) {//<win,UCTofson,son>
+        int win;
+        std::pair<int,double> ans;
+        if(tree[s].unexpand_num){//未完全展开
+            Node n=tree[s];
+            for(auto i=n.son.begin(); i!=n.son.end(); ++i){//expand一次
+                if(!tree[*i].ismet){//未被访问过的节点，进行simulation
+                    tree[*i].ismet=true;
+                    tree[*i].son= next_step(*i);
+                    tree[*i].unexpand_num=tree[*i].son.size();
+                    ans.first=win=Simulation(*i);
+                    if(win==-1)break;
+                    int n=++tree[*i].N;
+                    int q=tree[*i].Q+=win;
+                    ans.second=tree[*i].UCT= cal_UCT(n,q,N+1);
+                    if(tree[tree[s].prefer_son].UCT<ans.second)tree[s].prefer_son=*i;
+                    break;
+                }
+            }
+            tree[s].unexpand_num--;
+            return ans;
+        }
+        else{//已被完全拓展
+            ans= Selection(tree[s].prefer_son,tree[s].N);
+            if(ans.first!=-1){
+                for(auto i=tree[s].son.begin();i!=tree[s].son.end();++i){//维护最大UCT
+                    if(tree[*i].UCT>tree[tree[s].prefer_son].UCT)tree[s].prefer_son=*i;
+                }//维护最大UCT
+                int n=tree[s].N++;
+                int q=tree[s].Q+=(1-ans.first);
+                ans.second=tree[s].UCT= cal_UCT(n,q,N);
+                ans.first=(1-ans.first);
+                return ans;
+            }
+            else{
+                    ans.first=-1;
+                    return ans;
+            }
+        }
+    }
 
+    int Simulation(const State &s) {
+        State s0=s;
+        bool win;
+        int i;
+         for(i = 0; i < SIMULATION; ++i){//最多走1000次
+             std::vector<State> v= next_step(s0);
+             int size=v.size();
+             srand((unsigned)time(NULL));
+             int seed=rand()%size;
+             s0=v[seed];
+             if(ai_side){
+                 if(s0.s0_index.first==0){
+                     win=false;
+                     break;
+                 }
+             }
+             else {
+                 if (s0.s1_index.first == 16) {
+                     win = true;
+                     break;
+                 }
+             }
+         }
+         if(i==SIMULATION)return -1;
+         return win;
+    }//win lose unable
+
+    std::pair<int,std::pair<int,int>> Tree_search(){
+       for(int i = 0; i < CIRCLE; ++i){
+           Selection(state,0);
+       }
+        return change_state(tree[state].prefer_son.action);
+    }
+} monte_tree;
 /* The following notation is based on player 0's perspective
  * Rows are labeled 0 through 8 from player 1's side to player 0's side
  * Columns are labeled 0 through 8 from player 0's left to right
@@ -411,17 +505,10 @@ std::pair<int, std::pair<int, int> > action(std::pair<int, std::pair<int, int> >
             if(!flag)std::cerr<<"boad false";
         }
     }
-
-    std::vector<State> v= next_step(state,ai_side);
+    std::vector<State> v= next_step(state);
     int size=v.size();
     srand((unsigned)time(NULL));
     int seed=rand()%size;
     std::pair<int, std::pair<int, int> > loc0=v[seed].action;
-    change_state(loc0);
-//    std::cerr <<"()()()"<<ai_side<<' '<<loc0.first << ' ' << loc0.second.first << ' ' << loc0.second.second;
-    return loc0;
-    if (!ai_side)
-        return std::make_pair(0, std::make_pair(7, 4));
-    else
-        return std::make_pair(0, std::make_pair(1, 4));
+    return change_state(loc0);
 }
