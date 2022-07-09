@@ -7,14 +7,14 @@
 #include<cmath>
 #include<cstring>
 #include<random>
-
+std::mt19937 mt_rand(time(nullptr));
 extern int ai_side;
-std::string ai_name = "random_swim";
-const int CIRCLE = 10;
+int STEP=-1;
+std::string ai_name = "MCTS 1.0";
+const int CIRCLE = 2000;
 const int WALK_WEIGHT = 50;
 int debug = 0;
-const int SIMULATION = 1000;
-int step = 0;
+const int SIMULATION = 2000;//max is 100 steps
 using namespace std;
 const int dx[4]{0, 1, 0, -1};
 const int dy[4]{1, 0, -1, 0};
@@ -30,6 +30,7 @@ public:
     bool b[17][17];
     int s0_board_num = 10;
     int s1_board_num = 10;
+    int step=0;
     std::pair<int, std::pair<int, int> > action;
 
     bool operator==(const State &opt) const {
@@ -42,6 +43,7 @@ public:
         if (s1_index != opt.s1_index)return false;
         if (s0_board_num != opt.s0_board_num)return false;
         if (s1_board_num != opt.s1_board_num)return false;
+        if(step!=opt.step)return false;
         return true;
     }
 
@@ -99,8 +101,8 @@ struct Node {
 struct Hash {
     std::size_t operator()(const State &t) const {
         std::size_t hash_result =
-                ((233ull * (t.s0_index.first + 1) + (t.s0_index.second + 1)) * 233ull + t.s1_index.first + 1) * 233ull +
-                t.s1_index.second + 1;
+                (((233ull * (t.s0_index.first + 1) + (t.s0_index.second + 1)) * 233ull + t.s1_index.first + 1) * 233ull +
+                t.s1_index.second + 1)*233ul + t.step;
         for (int i = 0; i < 17; ++i)
             for (int j = 0; j < 17; ++j)
                 hash_result = (hash_result * 233ull + t.b[i][j] + 1);
@@ -198,7 +200,9 @@ bool bfs(std::pair<int, std::pair<int, int>> board) {//保证加入的板不会�
 }
 
 void init() {
+//    std::mt19937 mt_rand(time(nullptr));
     srand(time(nullptr) ^ 19260817);
+    state.step=0;
 }
 
 std::pair<int, int> map_node(std::pair<int, int> loc) {
@@ -220,14 +224,17 @@ std::vector<State> next_step(const State &s, bool iss0) {//走s0
             if (std::make_pair(x, y) == s.s1_index) {//棋子重合
                 x = x + dx[i];//再走一步
                 y = y + dy[i];
-                if (x < 0 || x > 16 || y < 0 || y > 16)continue;
-                if (s.b[x][y]) {//with board
+//                if (x < 0 || x > 16 || y < 0 || y > 16)continue;
+                if (s.b[x][y]||x < 0 || x > 16 || y < 0 || y > 16) {//with board or out of bound
+//                    cerr << "herhe" << endl;
                     x -= dx[i];//back to another cheese
                     y -= dy[i];
                     int dx_ = dy[i];//exchange
                     int dy_ = dx[i];
+//                    cerr << x+dx_ << "*1*" << y+dy_ << endl;
                     if (x + dx_ >= 0 && x + dx_ <= 16 && y + dy_ >= 0 && y + dy_ <= 16 && !s.b[x + dx_][y + dy_]) {
                         S = s;
+                        S.step=s.step+1;
                         S.action.first = 0;
                         S.action.second = std::make_pair((x + 2 * dx_) >> 1, (y + 2 * dy_) >> 1);
                         S.s0_index = std::make_pair(x + 2 * dx_, y + 2 * dy_);//映射结果
@@ -235,17 +242,20 @@ std::vector<State> next_step(const State &s, bool iss0) {//走s0
                     }
                     dx_ = -dx_;
                     dy_ = -dy_;
+//                    cerr << x+dx_ << "*2*" << y+dy_ << endl;
                     if (x + dx_ >= 0 && x + dx_ <= 16 && y + dy_ >= 0 && y + dy_ <= 16 && !s.b[x + dx_][y + dy_]) {
                         S = s;
+                        S.step=s.step+1;
                         S.action.first = 0;
                         S.action.second = std::make_pair((x + 2 * dx_) >> 1, (y + 2 * dy_) >> 1);
                         S.s0_index = std::make_pair(x + 2 * dx_, y + 2 * dy_);//映射结果
                         v.push_back(S);
                     }
                 } else {//no board
-                    x = x + dx[i];//再走一步
+                    x = x + dx[i];//可以跳过
                     y = y + dy[i];
                     S = s;
+                    S.step=s.step+1;
                     S.action.first = 0;
                     S.action.second = std::make_pair(x / 2, y / 2);
                     S.s0_index = std::make_pair(x, y);//映射结果
@@ -253,6 +263,7 @@ std::vector<State> next_step(const State &s, bool iss0) {//走s0
                 }
             } else {
                 S = s;
+                S.step=s.step+1;
                 S.action.first = 0;
                 S.action.second = std::make_pair(x / 2, y / 2);
                 S.s0_index = std::make_pair(x, y);//映射结果
@@ -268,14 +279,15 @@ std::vector<State> next_step(const State &s, bool iss0) {//走s0
             if (std::make_pair(x, y) == s.s0_index) {//棋子重合
                 x = x + dx[i];//再走一步
                 y = y + dy[i];
-                if (x < 0 || x > 16 || y < 0 || y > 16)continue;
-                if (s.b[x][y]) {//with board
+//                if (x < 0 || x > 16 || y < 0 || y > 16)continue;
+                if (s.b[x][y]||x < 0 || x > 16 || y < 0 || y > 16) {//with board or out of bound
                     x -= dx[i];//back to another cheese
                     y -= dy[i];
                     int dx_ = dy[i];//exchange
                     int dy_ = dx[i];
                     if (x + dx_ >= 0 && x + dx_ <= 16 && y + dy_ >= 0 && y + dy_ <= 16 && !s.b[x + dx_][y + dy_]) {
                         S = s;
+                        S.step=s.step+1;
                         S.action.first = 0;
                         S.action.second = std::make_pair((x + 2 * dx_) >> 1, (y + 2 * dy_) >> 1);
                         S.s1_index = std::make_pair(x + 2 * dx_, y + 2 * dy_);//映射结果
@@ -285,6 +297,8 @@ std::vector<State> next_step(const State &s, bool iss0) {//走s0
                     dy_ = -dy_;
                     if (x + dx_ >= 0 && x + dx_ <= 16 && y + dy_ >= 0 && y + dy_ <= 16 && !s.b[x + dx_][y + dy_]) {
                         S = s;
+                        S.step=s.step+1;
+                        S.step=s.step+1;
                         S.action.first = 0;
                         S.action.second = std::make_pair((x + 2 * dx_) >> 1, (y + 2 * dy_) >> 1);
                         S.s1_index = std::make_pair(x + 2 * dx_, y + 2 * dy_);//映射结果
@@ -294,6 +308,7 @@ std::vector<State> next_step(const State &s, bool iss0) {//走s0
                     x = x + dx[i];//再走一步
                     y = y + dy[i];
                     S = s;
+                    S.step=s.step+1;
                     S.action.first = 0;
                     S.action.second = std::make_pair(x / 2, y / 2);
                     S.s1_index = std::make_pair(x, y);//映射结果
@@ -301,6 +316,7 @@ std::vector<State> next_step(const State &s, bool iss0) {//走s0
                 }
             } else {
                 S = s;
+                S.step=s.step+1;
                 S.action.first = 0;
                 S.action.second = std::make_pair(x / 2, y / 2);
                 S.s1_index = std::make_pair(x, y);//映射结果
@@ -539,10 +555,10 @@ std::vector<State> next_step(const State &s, bool iss0) {//走s0
 class Monte_Tree {
 public:
     double cal_UCT(double Ni, double Qi, double N) {
-        return (Qi / Ni) + 1.41 * pow(log(N) / Ni, 0.5);
+        return ((Qi / Ni) + 2.41 * pow(log(N) / Ni, 0.5));
     }
 
-    int Selection(const State &s, int N, bool iss0) {//<win,UCTofson> //if 当前局面走的是s0
+    int Selection(const State &s, bool iss0) {//<win,UCTofson> //if 当前局面走的是s0
         //TODO 删除不必要的节点
         int ans;
         if (!tree[s].ismet) {// first time met add sons
@@ -552,101 +568,67 @@ public:
         }
         double max_uct = -1;
         if (!tree[s].isexpanded) {
+//            cerr << "not expanded! " << s.step << endl;
             for (auto i = tree[s].son.begin(); i != tree[s].son.end(); ++i) {
                 if (!tree[*i].ismet) {//updateUCT
-                    tree[*i].ismet = true;
-                    tree[*i].son = next_step(*i, !iss0);
-                    tree[*i].prefer_son = State();//for the biggest uct
-                    ans = Simulation(*i, !iss0);
+                    ans = Simulation(*i, !iss0);//
                     cerr << "%%%" << ans << endl;
                     if (ans == -1)return -1;//没有修改uct 有可能全都是-1 导致没有儿子的uct被修改
+                    tree[*i].son = next_step(*i, !iss0);
+//                    tree[*i].prefer_son = tree[*i].son[0];//for the biggest uct
+                    tree[*i].ismet = true;
                     int n = ++tree[*i].N;
+//                    if(!(ai_side^(!iss0)))ans=1-ans;
                     int q = tree[*i].Q += ans;
-                    tree[*i].UCT = cal_UCT(double(n), double(q), ++tree[s].N);
+                    tree[*i].UCT = cal_UCT(double(n), double(q), tree[s].N+1);
+//                    cerr << "UCT " << tree[*i].UCT<<' '<<i->s0_index.first/2<<' '<<i->s0_index.second/2<<' '<<i->s1_index.first/2<<' '<<i->s1_index.second/2 << endl;
+                    double ma_=0;
                     for (auto j = tree[s].son.begin(); j != tree[s].son.end(); ++j) {//update UCT
-                        if (tree[tree[s].prefer_son].UCT < tree[*j].UCT)tree[s].prefer_son = *j;
+                       if(tree[*j].ismet) tree[*j].UCT= cal_UCT(tree[*j].N,tree[*j].Q,tree[s].N+1);
+                        if (ma_ < tree[*j].UCT){
+                            tree[s].prefer_son = *j;
+                            ma_=tree[*j].UCT;
+                        }
                     }
-                    return (1 - ans);
+                    return ans;
                 }
             }
+            double ma_=0;
             for (auto j = tree[s].son.begin(); j != tree[s].son.end(); ++j) {//update UCT
-                if (tree[tree[s].prefer_son].UCT < tree[*j].UCT)tree[s].prefer_son = *j;
+                tree[*j].UCT= cal_UCT(tree[*j].N,tree[*j].Q,tree[s].N+1);
+                if (ma_ < tree[*j].UCT){
+                    tree[s].prefer_son = *j;
+                    ma_=tree[*j].UCT;
+                }
             }
             tree[s].isexpanded = true;
-            ans = Selection(tree[s].prefer_son, tree[s].N, !iss0);
+            ans = Selection(tree[s].prefer_son,!iss0);
             if (ans != -1) {
                 tree[tree[s].prefer_son].UCT = cal_UCT(tree[tree[s].prefer_son].N++, tree[tree[s].prefer_son].Q += ans,
                                                        tree[s].N + 1);
-                return (1 - ans);
+                return ans;
             }
             return -1;
 
         } else {
-            max_uct = tree[tree[s].prefer_son].UCT;
-            for (auto i = tree[s].son.begin(); i != tree[s].son.end(); ++i) {
+//            cerr << "expanded!" <<s.step<< endl;
+            max_uct = 0;
+            for (auto i = tree[s].son.begin(); i != tree[s].son.end(); ++i) {//update UCT
+                tree[*i].UCT= cal_UCT(tree[*i].N,tree[*i].Q,tree[s].N+1);
                 if (max_uct < tree[*i].UCT) {
                     tree[s].prefer_son = *i;
                     max_uct = tree[*i].UCT;
                 }
             }
-            ans = Selection(tree[s].prefer_son, tree[s].N, !iss0);
+            ans = Selection(tree[s].prefer_son, !iss0);
             if (ans != -1) {
                 tree[tree[s].prefer_son].UCT = cal_UCT(tree[tree[s].prefer_son].N++, tree[tree[s].prefer_son].Q += ans,
                                                        tree[s].N + 1);
-                return (1 - ans);
+//                cerr<<"UCT "<<tree[tree[s].prefer_son].UCT<<endl;
+                return  ans;
             }
             return -1;
-
         }
-//        if (tree[s].unexpand_num) {//未完全展开,is the frontier
-//            Node n = tree[s];
-//            for (auto i = n.son.begin(); i != n.son.end(); ++i) {//expand一个节点,进行simulation
-//                if (!tree[*i].ismet) {//未被访问过的节点，进行simulation,父节点met，所以这里不会碰到父节点
-//                    tree[s].unexpand_num--;
-//                    tree[*i].ismet = true;
-//                    tree[*i].son = next_step(*i,!iss0);
-//                    tree[*i].unexpand_num = tree[*i].son.size();
-//                    tree[*i].prefer_son = State();//for the biggest uct
-//                    ans.first = win = Simulation(*i,!iss0);
-//                    cerr << "%%%" << win << endl;
-//                    if (win == -1)break;//没有修改uct 有可能全都是-1 导致没有儿子的uct被修改
-//                    int n = ++tree[*i].N;
-//                    int q = tree[*i].Q += win;
-//                    ans.second = tree[*i].UCT = cal_UCT(double(n), double(q), ++tree[s].N);
-//                    cerr << "UCT " << ans.second << endl;
-//                    if (tree[tree[s].prefer_son].UCT < ans.second)tree[s].prefer_son = *i;
-//                    break;
-//                }
-//            }
-//
-//            return ans;
-//        }
-//        else {//已被完全拓展 continue selection
-//            //debug//
-////            if (!tree[tree[s].prefer_son].unexpand_num) {
-////            } else {
-//cerr <<s.s0_index.first/2 << ' ' << s.s0_index.second/2 << ' ' << s.s1_index.first/2 << ' ' << s.s1_index.second/2 << endl;
-////if(debug==5)exit(0);
-//++debug;
-//                cerr << "$$$$$"<<debug << endl;
-//                ans = Selection(tree[s].prefer_son, tree[s].N,!iss0);
-//            if (ans.first != -1) {
-//                for (auto i = tree[s].son.begin(); i != tree[s].son.end(); ++i) {//维护最大UCT
-//                    if (tree[*i].UCT > tree[tree[s].prefer_son].UCT && *i != s)tree[s].prefer_son = *i;//TODO 不能等于父节点
-//                }
-//                cerr << "father " << s.s0_index.first/2 << ' ' << s.s0_index.second/2 << ' ' << s.s1_index.first/2 << ' ' << s.s1_index.second/2 << endl;
-//                cerr << "prefered son " << tree[s].prefer_son.s0_index.first/2 << ' ' << tree[s].prefer_son.s0_index.second/2
-//                <<' ' << tree[s].prefer_son.s1_index.first/2 << ' ' << tree[s].prefer_son.s1_index.second/2 << endl;
-//                int n = tree[s].N++;
-//                int q = tree[s].Q += (1 - ans.first);
-//                ans.second = tree[s].UCT = cal_UCT(n, q, N);
-//                ans.first = (1 - ans.first);
-//                return ans;
-//            } else {
-//                ans.first = -1;
-//                return ans;
-//            }
-//        }
     }
 
     int Simulation(const State &s, bool iss0) {
@@ -655,21 +637,20 @@ public:
         int i;
         bool a = iss0;
         for (i = 0; i < SIMULATION; ++i) {//最多走1000步
-//            cerr << "simulation " << s0.s0_index.first/2 << ' ' << s0.s0_index.second/2<<' ' << s0.s1_index.first/2<<' '<<s0.s1_index.second/2 << endl;
             std::vector<State> v = next_step(s0, a);
             int size = v.size();
-            int seed = rand() % size;
+//            cerr <<s0.step<<' '<<a<< "simulation " << s0.s0_index.first/2 << ' ' << s0.s0_index.second/2<<' ' << s0.s1_index.first/2<<' '<<s0.s1_index.second/2 << endl;
+            int seed = mt_rand() % size;
             s0 = v[seed];
-            if (!iss0) {
-                if (s0.s0_index.first == 0) {
-                    win = false;
-                    break;
-                }
-            } else {
-                if (s0.s1_index.first == 16) {
-                    win = true;
-                    break;
-                }
+            if(s0.s0_index.first == 0){
+                if(ai_side)win= false;
+                else win=true;
+                break;
+            }
+            else if(s0.s1_index.first==16){
+                if(ai_side)win=true;
+                else win=false;
+                break;
             }
             a = !a;
         }
@@ -680,20 +661,36 @@ public:
     std::pair<int, std::pair<int, int>> Tree_search() {
         debug = 0;
         for (int i = 0; i < CIRCLE; ++i) {//TODO 用时间作为循环变量
-            cerr << "%&&&&" << !ai_side << endl;
-            Selection(state, tree[state].N, !ai_side);
-            cerr << '#' << i << endl;
+//            cerr << "%&&&&" << !ai_side << endl;
+            int ans=Selection(state,!ai_side);
+            if(ans!=-1)tree[state].N++;
+//            cerr << '#' << i << endl;
         }
-        std::pair<int, std::pair<int, int>> loc = tree[state].prefer_son.action;
-        state = tree[state].prefer_son;
+        int ma=0;
+        State ans;
+        for(auto i = tree[state].son.begin();i!=tree[state].son.end();++i){
+//            if(tree[*i].ismet)tree[*i].UCT=cal_UCT(tree[*i].N,tree[*i].Q,tree[state].N);
+            if(tree[*i].N>=ma){
+                ans=*i;
+                ma=tree[*i].N;
+            }
+        }
+        std::pair<int, std::pair<int, int>> loc = ans.action;
+        cerr << "--------------" <<tree[state].N<< endl;
+        for(auto i = tree[state].son.begin();i!=tree[state].son.end();++i){
+            cerr << tree[*i].UCT<<' '<<tree[*i].Q<<' '<<tree[*i].N << ' ' << i->s0_index.first/2 << ' ' << i->s0_index.second/2 << ' ' << i->s1_index.first/2 << ' ' << i->s1_index.second/2 << endl;
+        }
 //        cerr << "ans " << tree[state].prefer_son.s0_index.first/2 << ' ' <<tree[state].prefer_son.s0_index.second/2 << ' ' << tree[state].prefer_son.s1_index.first/2
-//        <<' ' << tree[state].prefer_son.s1_index.second/2 << endl;
+//             <<' ' << tree[state].prefer_son.s1_index.second/2 << endl;
+        cerr << "action " << loc.first << ' ' <<loc.second.first << ' ' << loc.second.second << endl;
+        state = ans;
         return loc;
     }
 } monte_tree;
 
 std::pair<int, std::pair<int, int> > action(std::pair<int, std::pair<int, int> > loc) {
-    ++step;
+    cerr << ai_side<<"()()" << endl;
+//    ++STEP;
     if (ai_side) {
         if (!loc.first)state.s0_index = map_node(loc.second);
         else if (loc.first == 1 || loc.first == 2) {
@@ -709,6 +706,7 @@ std::pair<int, std::pair<int, int> > action(std::pair<int, std::pair<int, int> >
             if (!flag)std::cerr << "boad false";
         }
     }
+    state.step++;
     std::pair<int, std::pair<int, int> > loc0 = monte_tree.Tree_search();
 //    cerr << "--------------------" << endl;
 //    std::cerr<<loc0.first<<' '<<loc0.second.first<<' '<<loc0.second.second << "&&";
@@ -722,5 +720,6 @@ std::pair<int, std::pair<int, int> > action(std::pair<int, std::pair<int, int> >
 //        int x = loc0.second.first * 2 + 1;
 //        int y = loc0.second.second * 2 + 1;
 //    }
+cerr << loc0.first << ' ' << loc0.second.first << ' ' << loc0.second.second << endl;
     return loc0;
 }
