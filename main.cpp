@@ -10,11 +10,12 @@
 std::mt19937 mt_rand(time(nullptr));
 extern int ai_side;
 int STEP=-1;
+int debug_=0;
 std::string ai_name = "MCTS 1.0";
-const int CIRCLE = 2000;
+const int CIRCLE = 1000;
 const int WALK_WEIGHT = 50;
 int debug = 0;
-const int SIMULATION = 2000;//max is 100 steps
+const int SIMULATION = 1000;//max is 100 steps
 using namespace std;
 const int dx[4]{0, 1, 0, -1};
 const int dy[4]{1, 0, -1, 0};
@@ -119,7 +120,7 @@ struct Equal {
 std::unordered_map<State, Node, Hash> tree;
 
 //init function is called once at the beginning
-bool bfs(std::pair<int, std::pair<int, int>> board) {//保证加入的板不会重叠交叉
+bool bfs(std::pair<int, std::pair<int, int>> board,const State &s) {//保证加入的板不会重叠交叉
     int x = 2 * board.second.first + 1;
     int y = 2 * board.second.second + 1;
     int dist[17][17];
@@ -127,7 +128,7 @@ bool bfs(std::pair<int, std::pair<int, int>> board) {//保证加入的板不会�
     memset(dist, -1, sizeof(dist));
     for (int i = 0; i < 17; ++i) {
         for (int j = 0; j < 17; ++j) {
-            map[i][j] = state.b[i][j];
+            map[i][j] = s.b[i][j];
         }
     }
     if (board.first == 1) {//vertical
@@ -135,11 +136,11 @@ bool bfs(std::pair<int, std::pair<int, int>> board) {//保证加入的板不会�
     } else {//horizon
         map[x][y] = map[x][y + 1] = map[x][y - 1] = 1;
     }
-    poi q[300];
+    poi q[400];
     int h = 0, t = -1;
     poi p;
-    p.x = state.s0_index.first;
-    p.y = state.s0_index.second;
+    p.x = s.s0_index.first;
+    p.y = s.s0_index.second;
     q[++t] = p;
     dist[p.x][p.y] = 1;
 //    map[p.x][p.y]=1;
@@ -169,8 +170,8 @@ bool bfs(std::pair<int, std::pair<int, int>> board) {//保证加入的板不会�
     }
     memset(dist, -1, sizeof(dist));
     h = 0, t = -1;
-    p.x = state.s1_index.first;
-    p.y = state.s1_index.second;
+    p.x = s.s1_index.first;
+    p.y = s.s1_index.second;
     q[++t] = p;
     dist[p.x][p.y] = 1;
     while (h <= t) {
@@ -334,202 +335,214 @@ std::vector<State> next_step(const State &s, bool iss0) {//走s0
      *横竖板随机
      */
     //放在对方周围
-//        if (!iss0) {//walk s1
-//            if(s.s1_board_num){
-//                int x_ = s.s0_index.first;
-//                int y_ = s.s0_index.second;
+        if (!iss0) {//walk s1
+            if(s.s1_board_num){
+                int x_ = s.s0_index.first;
+                int y_ = s.s0_index.second;
 //                srand((unsigned) time(NULL));
-//                int vertical = rand() % 2;
-//                if (vertical) {//vertical
-//                    int x = x_ - 1;
-//                    int y = y_ - 1;
-//                    if (x > 0 && y > 0 && !s.b[x][y] && !s.b[x - 1][y] && !s.b[x + 1][y] &&
-//                        bfs(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)))) {//满足放板子条件
-//                        S = s;
-//                        S.action = std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
-//                        S.add_board(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
-//                        --S.s1_board_num;
-////                    cerr << "other"<<endl;
-//                        v.push_back(S);
-//                    }
-//                    x = x_ - 1;
-//                    y = y_ + 1;
-//                    if (x > 0 && y < 16 && !s.b[x][y] && !s.b[x - 1][y] && !s.b[x + 1][y] &&
-//                        bfs(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)))) {
-//                        S = s;
-//                        S.action = std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
-//                        S.add_board(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
-//                        --S.s1_board_num;
-////                    cerr << "other"<<endl;
-//                        v.push_back(S);
-//                    }
-//                }
-//                else {//horizon
-//                    int x = x_ - 1;
-//                    int y = y_ - 1;
-//                    if (y > 0 && y < 16 && !s.b[x][y - 1] && !s.b[x][y] && !s.b[x][y + 1] &&
-//                        bfs(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)))) {
-//                        S = s;
-//                        S.action = std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
-//                        S.add_board(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
-//                        --S.s1_board_num;
-////                    cerr << "other"<<endl;
-//                        v.push_back(S);
-//                    }
-//                    x = x_ - 1;
-//                    y = y_ + 1;
-//                    if (y > 0 && y < 16 && !s.b[x][y - 1] && !s.b[x][y + 1] && !s.b[x][y] &&
-//                        bfs(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)))) {
-//                        S = s;
-//                        S.action = std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
-//                        S.add_board(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
-//                        --S.s1_board_num;
-////                    cerr << "other"<<endl;
-//                        v.push_back(S);
-//                    }
-//                }
-//            }
-//        } else {//
-//            if(s.s0_board_num){
-//                int x_ = s.s1_index.first;
-//                int y_ = s.s1_index.second;
+                int vertical = mt_rand() % 2;
+                if (vertical) {//vertical
+                    int x = x_ - 1;
+                    int y = y_ - 1;
+                    if (x > 0 && y > 0 && !s.b[x][y] && !s.b[x - 1][y] && !s.b[x + 1][y] &&
+                        bfs(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)),s)) {//满足放板子条件
+                        S = s;
+                        S.step=s.step+1;
+                        S.action = std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
+                        S.add_board(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
+                        --S.s1_board_num;
+//                    cerr << "other"<<endl;
+                        v.push_back(S);
+                    }
+                    x = x_ - 1;
+                    y = y_ + 1;
+                    if (x > 0 && y < 16 && !s.b[x][y] && !s.b[x - 1][y] && !s.b[x + 1][y] &&
+                        bfs(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)),s)) {
+                        S = s;
+                        S.step=s.step+1;
+                        S.action = std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
+                        S.add_board(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
+                        --S.s1_board_num;
+//                    cerr << "other"<<endl;
+                        v.push_back(S);
+                    }
+                }
+                else {//horizon
+                    int x = x_ - 1;
+                    int y = y_ - 1;
+                    if (y > 0 && y < 16 && !s.b[x][y - 1] && !s.b[x][y] && !s.b[x][y + 1] &&
+                        bfs(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)),s)) {
+                        S = s;
+                        S.step=s.step+1;
+                        S.action = std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
+                        S.add_board(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
+                        --S.s1_board_num;
+//                    cerr << "other"<<endl;
+                        v.push_back(S);
+                    }
+                    x = x_ - 1;
+                    y = y_ + 1;
+                    if (y > 0 && y < 16 && !s.b[x][y - 1] && !s.b[x][y + 1] && !s.b[x][y] &&
+                        bfs(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)),s)) {
+                        S = s;
+                        S.step=s.step+1;
+                        S.action = std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
+                        S.add_board(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
+                        --S.s1_board_num;
+//                    cerr << "other"<<endl;
+                        v.push_back(S);
+                    }
+                }
+            }
+        } else {//
+            if(s.s0_board_num){
+                int x_ = s.s1_index.first;
+                int y_ = s.s1_index.second;
 //                srand((unsigned) time(NULL));
-//                int vertical = rand() % 2;
-//                if (vertical) {//vertical
-//                    int x = x_ + 1;
-//                    int y = y_ - 1;
-//                    if (x < 16 && y > 0 && !s.b[x - 1][y] && !s.b[x + 1][y] && !s.b[x][y] &&
-//                        bfs(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)))) {//满足放板子条件
-//                        S = s;
-//                        S.action = std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
-//                        S.add_board(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
-//                        --S.s0_board_num;
-////                    cerr << "other"<<endl;
-//                        v.push_back(S);
-//                    }
-//                    x = x_ + 1;
-//                    y = y_ + 1;
-//                    if (x < 16 && y < 16 && !s.b[x - 1][y] && !s.b[x][y] && !s.b[x + 1][y] &&
-//                        bfs(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)))) {
-//                        S = s;
-//                        S.action = std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
-//                        S.add_board(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
-//                        --S.s0_board_num;
-////                    cerr << "other"<<endl;
-//                        v.push_back(S);
-//                    }
-//                }
-//                else {//horizon
-//                    int x = x_ + 1;
-//                    int y = y_ - 1;
-//                    if (y > 0 && y < 16 && !s.b[x][y - 1] && !s.b[x][y] && !s.b[x][y + 1] &&
-//                        bfs(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)))) {
-//                        S = s;
-//                        S.action = std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
-//                        S.add_board(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
-//                        --S.s0_board_num;
-////                    cerr << "other"<<endl;
-//                        v.push_back(S);
-//                    }
-//                    x = x_ + 1;
-//                    y = y_ + 1;
-//                    if (y > 0 && y < 16 && !s.b[x][y - 1] && !s.b[x][y] && !s.b[x][y + 1] &&
-//                        bfs(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)))) {
-//                        S = s;
-//                        S.action = std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
-//                        S.add_board(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
-//                        --S.s0_board_num;
-////                    cerr << "other"<<endl;
-//                        v.push_back(S);
-//                    }
-//                }
-//            }
-//
-//            //put board next to other boards
-//        }
-//        //放在已有的板子周围
-//        if(iss0&&s.s0_board_num){
-//            for (int i = 0; i < 17; ++i) {
-//                for (int j = 0; j < 17; ++j) {
-//                    if (s.b[i][j]) {
+                int vertical = mt_rand() % 2;
+                if (vertical) {//vertical
+                    int x = x_ + 1;
+                    int y = y_ - 1;
+                    if (x < 16 && y > 0 && !s.b[x - 1][y] && !s.b[x + 1][y] && !s.b[x][y] &&
+                        bfs(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)),s)) {//满足放板子条件
+                        S = s;
+                        S.step=s.step+1;
+                        S.action = std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
+                        S.add_board(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
+                        --S.s0_board_num;
+//                    cerr << "other"<<endl;
+                        v.push_back(S);
+                    }
+                    x = x_ + 1;
+                    y = y_ + 1;
+                    if (x < 16 && y < 16 && !s.b[x - 1][y] && !s.b[x][y] && !s.b[x + 1][y] &&
+                        bfs(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)),s)) {
+                        S = s;
+                        S.step=s.step+1;
+                        S.action = std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
+                        S.add_board(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
+                        --S.s0_board_num;
+//                    cerr << "other"<<endl;
+                        v.push_back(S);
+                    }
+                }
+                else {//horizon
+                    int x = x_ + 1;
+                    int y = y_ - 1;
+                    if (y > 0 && y < 16 && !s.b[x][y - 1] && !s.b[x][y] && !s.b[x][y + 1] &&
+                        bfs(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)),s)) {
+                        S = s;
+                        S.step=s.step+1;
+                        S.action = std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
+                        S.add_board(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
+                        --S.s0_board_num;
+//                    cerr << "other"<<endl;
+                        v.push_back(S);
+                    }
+                    x = x_ + 1;
+                    y = y_ + 1;
+                    if (y > 0 && y < 16 && !s.b[x][y - 1] && !s.b[x][y] && !s.b[x][y + 1] &&
+                        bfs(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)),s)) {
+                        S = s;
+                        S.step=s.step+1;
+                        S.action = std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
+                        S.add_board(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
+                        --S.s0_board_num;
+//                    cerr << "other"<<endl;
+                        v.push_back(S);
+                    }
+                }
+            }
+
+            //put board next to other boards
+        }
+        //放在已有的板子周围
+        if(iss0&&s.s0_board_num){
+            for (int i = 0; i < 17; ++i) {
+                for (int j = 0; j < 17; ++j) {
+                    if (s.b[i][j]) {
 //                        srand((unsigned) time(NULL));
-//                        int vertical = rand() % 2;
-//                        if (vertical) {
-//                            for (int t = 0; t < 4; ++t) {
-//                                int x = i + dx[t];
-//                                int y = j + dy[t];
-//                                if (!(x % 2) || !(y % 2))continue;//必须是奇数
-//                                if (y <= 0 || y >= 16 || x >= 16 || x <= 0 || s.b[x][y] || s.b[x + 1][y] || s.b[x - 1][y] ||
-//                                    !bfs(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1))))
-//                                    continue;
-//                                S = s;
-//                                S.action = std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
-//                                S.add_board(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
-//                                S.s0_board_num--;
-////                            cerr <<"board "<< i << ' ' << j <<endl;
-//                                v.push_back(S);
-//                            }
-//                        } else {
-//                            for (int t = 0; t < 4; ++t) {
-//                                int x = i + dx[t];
-//                                int y = j + dy[t];
-//                                if (!(x % 2) || !(y % 2))continue;
-//                                if (y <= 0 || y >= 16 || x <= 0 || x >= 16 || s.b[x][y] || s.b[x][y + 1] || s.b[x][y - 1] ||
-//                                    !bfs(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1))))
-//                                    continue;
-//                                S = s;
-//                                S.action = std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
-//                                S.add_board(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
-//                                S.s0_board_num--;
-////                            cerr <<"board "<< i << ' ' << j <<endl;
-//                                v.push_back(S);
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//        else if(!iss0&&s.s1_board_num){
-//            for (int i = 0; i < 17; ++i) {
-//                for (int j = 0; j < 17; ++j) {
-//                    if (s.b[i][j]) {
+                        int vertical = mt_rand() % 2;
+                        if (vertical) {
+                            for (int t = 0; t < 4; ++t) {
+                                int x = i + dx[t];
+                                int y = j + dy[t];
+                                if (!(x % 2) || !(y % 2))continue;//必须是奇数
+                                if (y <= 0 || y >= 16 || x >= 16 || x <= 0 || s.b[x][y] || s.b[x + 1][y] || s.b[x - 1][y] ||
+                                    !bfs(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)),s))
+                                    continue;
+                                S = s;
+                                S.step=s.step+1;
+                                S.action = std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
+                                S.add_board(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
+                                S.s0_board_num--;
+//                            cerr <<"board "<< i << ' ' << j <<endl;
+                                v.push_back(S);
+                            }
+                        } else {
+                            for (int t = 0; t < 4; ++t) {
+                                int x = i + dx[t];
+                                int y = j + dy[t];
+                                if (!(x % 2) || !(y % 2))continue;
+                                if (y <= 0 || y >= 16 || x <= 0 || x >= 16 || s.b[x][y] || s.b[x][y + 1] || s.b[x][y - 1] ||
+                                    !bfs(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)),s))
+                                    continue;
+                                S = s;
+                                S.step=s.step+1;
+                                S.action = std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
+                                S.add_board(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
+                                S.s0_board_num--;
+//                            cerr <<"board "<< i << ' ' << j <<endl;
+                                v.push_back(S);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        else if(!iss0&&s.s1_board_num){
+            for (int i = 0; i < 17; ++i) {
+                for (int j = 0; j < 17; ++j) {
+                    if (s.b[i][j]) {
 //                        srand((unsigned) time(NULL));
-//                        int vertical = rand() % 2;
-//                        if (vertical) {
-//                            for (int t = 0; t < 4; ++t) {
-//                                int x = i + dx[t];
-//                                int y = j + dy[t];
-//                                if (!(x % 2) || !(y % 2))continue;//必须是奇数
-//                                if (y <= 0 || y >= 16 || x >= 16 || x <= 0 || s.b[x][y] || s.b[x + 1][y] || s.b[x - 1][y] ||
-//                                    !bfs(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1))))
-//                                    continue;
-//                                S = s;
-//                                S.action = std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
-//                                S.add_board(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
-//                                S.s1_board_num--;
-////                            cerr <<"board "<< i << ' ' << j <<endl;
-//                                v.push_back(S);
-//                            }
-//                        } else {
-//                            for (int t = 0; t < 4; ++t) {
-//                                int x = i + dx[t];
-//                                int y = j + dy[t];
-//                                if (!(x % 2) || !(y % 2))continue;
-//                                if (y <= 0 || y >= 16 || x <= 0 || x >= 16 || s.b[x][y] || s.b[x][y + 1] || s.b[x][y - 1] ||
-//                                    !bfs(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1))))
-//                                    continue;
-//                                S = s;
-//                                S.action = std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
-//                                S.add_board(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
-//                                S.s1_board_num--;
-////                            cerr <<"board "<< i << ' ' << j <<endl;
-//                                v.push_back(S);
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
+                        int vertical = mt_rand() % 2;
+                        if (vertical) {
+                            for (int t = 0; t < 4; ++t) {
+                                int x = i + dx[t];
+                                int y = j + dy[t];
+                                if (!(x % 2) || !(y % 2))continue;//必须是奇数
+                                if (y <= 0 || y >= 16 || x >= 16 || x <= 0 || s.b[x][y] || s.b[x + 1][y] || s.b[x - 1][y] ||
+                                    !bfs(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)),s))
+                                    continue;
+                                S = s;
+                                S.step=s.step+1;
+                                S.action = std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
+                                S.add_board(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
+                                S.s1_board_num--;
+//                            cerr <<"board "<< i << ' ' << j <<endl;
+                                v.push_back(S);
+                            }
+                        } else {
+                            for (int t = 0; t < 4; ++t) {
+                                int x = i + dx[t];
+                                int y = j + dy[t];
+                                if (!(x % 2) || !(y % 2))continue;
+                                if (y <= 0 || y >= 16 || x <= 0 || x >= 16 || s.b[x][y] || s.b[x][y + 1] || s.b[x][y - 1] ||
+                                    !bfs(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)),s))
+                                    continue;
+                                S = s;
+                                S.step=s.step+1;
+                                S.action = std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
+                                S.add_board(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
+                                S.s1_board_num--;
+//                            cerr <<"board "<< i << ' ' << j <<endl;
+                                v.push_back(S);
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
 //    cerr << "#####" << v.size() << endl;
     return v;
@@ -555,7 +568,7 @@ std::vector<State> next_step(const State &s, bool iss0) {//走s0
 class Monte_Tree {
 public:
     double cal_UCT(double Ni, double Qi, double N) {
-        return ((Qi / Ni) + 2.41 * pow(log(N) / Ni, 0.5));
+        return ((Qi / Ni) + 1.41 * pow(log(N) / Ni, 0.5));
     }
 
     int Selection(const State &s, bool iss0) {//<win,UCTofson> //if 当前局面走的是s0
@@ -564,22 +577,24 @@ public:
         if (!tree[s].ismet) {// first time met add sons
             tree[s].ismet = true;
             tree[s].son = next_step(s, iss0);
-            tree[s].prefer_son = State();
+            tree[s].prefer_son = tree[s].son[0];
+//            cerr << "size " << tree[s].son.size() << endl;
         }
         double max_uct = -1;
         if (!tree[s].isexpanded) {
 //            cerr << "not expanded! " << s.step << endl;
             for (auto i = tree[s].son.begin(); i != tree[s].son.end(); ++i) {
                 if (!tree[*i].ismet) {//updateUCT
-                    ans = Simulation(*i, !iss0);//
-                    cerr << "%%%" << ans << endl;
-                    if (ans == -1)return -1;//没有修改uct 有可能全都是-1 导致没有儿子的uct被修改
+                    ans = Simulation(*i, !iss0);
+                    if(ans==-1)debug_++;
+//                    cerr << "%%%" << ans << endl;
+                    if (ans == -1)return -1;//没有修改uct 有可能全都是-1 导致没有儿子的uct被修改,则不认为访问过
                     tree[*i].son = next_step(*i, !iss0);
 //                    tree[*i].prefer_son = tree[*i].son[0];//for the biggest uct
                     tree[*i].ismet = true;
                     int n = ++tree[*i].N;
 //                    if(!(ai_side^(!iss0)))ans=1-ans;
-                    int q = tree[*i].Q += ans;
+                    int q = tree[*i].Q += (1-ans);
                     tree[*i].UCT = cal_UCT(double(n), double(q), tree[s].N+1);
 //                    cerr << "UCT " << tree[*i].UCT<<' '<<i->s0_index.first/2<<' '<<i->s0_index.second/2<<' '<<i->s1_index.first/2<<' '<<i->s1_index.second/2 << endl;
                     double ma_=0;
@@ -590,7 +605,7 @@ public:
                             ma_=tree[*j].UCT;
                         }
                     }
-                    return ans;
+                    return (1-ans);
                 }
             }
             double ma_=0;
@@ -604,14 +619,14 @@ public:
             tree[s].isexpanded = true;
             ans = Selection(tree[s].prefer_son,!iss0);
             if (ans != -1) {
-                tree[tree[s].prefer_son].UCT = cal_UCT(tree[tree[s].prefer_son].N++, tree[tree[s].prefer_son].Q += ans,
+                tree[tree[s].prefer_son].UCT = cal_UCT(tree[tree[s].prefer_son].N++, tree[tree[s].prefer_son].Q += (1-ans),
                                                        tree[s].N + 1);
-                return ans;
+                return (1-ans);
             }
             return -1;
 
         } else {
-//            cerr << "expanded!" <<s.step<< endl;
+            cerr << "expanded!" <<s.step<< endl;
             max_uct = 0;
             for (auto i = tree[s].son.begin(); i != tree[s].son.end(); ++i) {//update UCT
                 tree[*i].UCT= cal_UCT(tree[*i].N,tree[*i].Q,tree[s].N+1);
@@ -622,15 +637,26 @@ public:
             }
             ans = Selection(tree[s].prefer_son, !iss0);
             if (ans != -1) {
-                tree[tree[s].prefer_son].UCT = cal_UCT(tree[tree[s].prefer_son].N++, tree[tree[s].prefer_son].Q += ans,
+                tree[tree[s].prefer_son].UCT = cal_UCT(tree[tree[s].prefer_son].N++, tree[tree[s].prefer_son].Q += (1-ans),
                                                        tree[s].N + 1);
 //                cerr<<"UCT "<<tree[tree[s].prefer_son].UCT<<endl;
-                return  ans;
+                return  (1-ans);
             }
             return -1;
         }
     }
-
+    void print_board(const State &s)const{
+        cerr << "-----------------------" << endl;
+        for(int i = 0; i < 17; ++i){
+            for(int j = 0; j < 17; ++j){
+                if(s.s0_index.first==i&&s.s0_index.second==j)cerr<<'A'<<' ';
+                else if(s.s1_index.first==i&&s.s1_index.second==j)cerr<<'B'<<' ';
+                else cerr << s.b[i][j]<<' ';
+            }
+            cerr << endl;
+        }
+        cerr << "------------------------------" << endl;
+    }
     int Simulation(const State &s, bool iss0) {
         State s0 = s;
         bool win;
@@ -639,16 +665,22 @@ public:
         for (i = 0; i < SIMULATION; ++i) {//最多走1000步
             std::vector<State> v = next_step(s0, a);
             int size = v.size();
-//            cerr <<s0.step<<' '<<a<< "simulation " << s0.s0_index.first/2 << ' ' << s0.s0_index.second/2<<' ' << s0.s1_index.first/2<<' '<<s0.s1_index.second/2 << endl;
+if(size==0)cerr << "!!!!!" << endl;
+//            cerr <<size <<' '<<a<< "simulation " << s0.s0_index.first/2 << ' ' << s0.s0_index.second/2<<' ' << s0.s1_index.first/2<<' '<<s0.s1_index.second/2 <<' '<<s0.s1_board_num<<' '<<s0.s0_board_num<< endl;
             int seed = mt_rand() % size;
+
             s0 = v[seed];
+//            if(s0.action.first==1||s0.action.first==2){
+//                print_board(s0);
+//                exit(0);
+//            }
             if(s0.s0_index.first == 0){
-                if(ai_side)win= false;
+                if(!iss0)win= false;
                 else win=true;
                 break;
             }
             else if(s0.s1_index.first==16){
-                if(ai_side)win=true;
+                if(!iss0)win=true;
                 else win=false;
                 break;
             }
@@ -720,6 +752,7 @@ std::pair<int, std::pair<int, int> > action(std::pair<int, std::pair<int, int> >
 //        int x = loc0.second.first * 2 + 1;
 //        int y = loc0.second.second * 2 + 1;
 //    }
-cerr << loc0.first << ' ' << loc0.second.first << ' ' << loc0.second.second << endl;
+//cerr << loc0.first << ' ' << loc0.second.first << ' ' << loc0.second.second << endl;
+cerr << debug_ << endl;
     return loc0;
 }
