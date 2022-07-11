@@ -11,13 +11,14 @@
 std::mt19937 mt_rand(time(nullptr) ^ 19260817);
 extern int ai_side;
 clock_t time_;
+int cnt=0;
 int STEP = -1;
 int debug_ = 0;
 std::string ai_name = "MCTS 2.0";
 const int CIRCLE = 1000;
 const int WALK_WEIGHT = 50;
 int debug = 0;
-const int SIMULATION = 800;//max is 100 steps
+const int SIMULATION = 20;//max is 100 steps
 using namespace std;
 const int dx[4]{0, 1, 0, -1};
 const int dy[4]{1, 0, -1, 0};
@@ -896,6 +897,7 @@ public:
         int i;
         bool a = iss0;
         for (i = 0; i < SIMULATION; ++i) {
+            ++cnt;
             std::vector<State> v = next_step(s0, a);
             int size = v.size();
 //            cerr <<size <<' '<<a<< "simulation " << s0.s0_index.first/2 << ' ' << s0.s0_index.second/2<<' ' << s0.s1_index.first/2<<' '<<s0.s1_index.second/2 <<' '<<s0.s1_board_num<<' '<<s0.s0_board_num<< endl;
@@ -953,6 +955,7 @@ public:
 } monte_tree;
 
 std::pair<int, std::pair<int, int> > action(std::pair<int, std::pair<int, int> > loc) {
+    cnt=0;
     time_=clock();
 //    cerr << ai_side << "()()" << endl;
 //    ++STEP;
@@ -961,14 +964,12 @@ std::pair<int, std::pair<int, int> > action(std::pair<int, std::pair<int, int> >
         else if (loc.first == 1 || loc.first == 2) {
             bool flag = state.add_board(loc);
             state.s0_board_num--;
-            if (!flag)std::cerr << "boad false";
         }
     } else {
         if (!loc.first)state.s1_index = map_node(loc.second);
         else if (loc.first == 1 || loc.first == 2) {
             bool flag = state.add_board(loc);
             state.s1_board_num--;
-            if (!flag)std::cerr << "boad false";
         }
     }
     state.step++;
@@ -980,5 +981,6 @@ std::pair<int, std::pair<int, int> > action(std::pair<int, std::pair<int, int> >
     } else {
         loc0 = monte_tree.Tree_search();
     }
+    cerr << "CNTTTT " << cnt<<endl;
     return loc0;
 }
