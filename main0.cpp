@@ -9,7 +9,8 @@
 #include<random>
 #include<iomanip>
 
-std::mt19937 mt_rand(time(nullptr) ^ 19260817);
+//std::mt19937 mt_rand(time(nullptr) ^ 19260817);
+std::mt19937 mt_rand(1);
 extern int ai_side;
 clock_t time_;
 int cnt = 0;
@@ -20,7 +21,7 @@ const int CIRCLE = 1000;
 const int WALK_WEIGHT = 50;
 const double BOARD_WEIGHT = 0;
 int debug = 0;
-const int SIMULATION = 20;//max is 100 steps
+const int SIMULATION =10;//max is 100 steps
 using namespace std;
 const int dx[4]{0, 1, 0, -1};
 const int dy[4]{1, 0, -1, 0};
@@ -28,7 +29,6 @@ struct poi {
     int x;
     int y;
 };
-
 class State {
 public:
     std::pair<int, int> s0_index;
@@ -95,7 +95,20 @@ public:
         } else return false;
     }
 } state;
-
+void print_board(const State &s){
+    cout << "-----------------------" << endl;
+    cout << s.s0_index.first / 2 << ' ' << s.s0_index.second / 2 << ' ' << s.s1_index.first / 2 << ' '
+         << s.s1_index.second / 2 << endl;
+    for (int i = 0; i < 17; i++) {
+        for (int j = 0; j < 17; j++) {
+            if (s.s0_index.first == i && s.s0_index.second == j)cout << 'A' << ' ';
+            else if (s.s1_index.first == i && s.s1_index.second == j)cout << 'B' << ' ';
+            else cout << (s.b[i][j] ? '|' : '.') << ' ';
+        }
+        cout << endl;
+    }
+    cout << "------------------------------" << endl;
+}
 struct Node {
     double Q = 0;
     int N = 0;
@@ -295,7 +308,9 @@ pair<int, pair<int, int>> shortest_path(const State &s, bool iss0) {
 }
 
 bool bfs(std::pair<int, std::pair<int, int>> board, const State &s) {//保证加入的板不会重叠交叉
-//    cerr << "bfs"<<endl;
+//    return true;
+    cerr << "bfs"<<endl;
+//    print_board(s);
     int x = 2 * board.second.first + 1;
     int y = 2 * board.second.second + 1;
     int dist[17][17];
@@ -392,7 +407,7 @@ std::pair<int, int> map_node(std::pair<int, int> loc) {
     return std::make_pair(loc.first * 2, loc.second * 2);
 }
 
-pair<vector<State>,vector<State>> next_step(const State &s, bool iss0) {//走s0
+pair<vector<State>,vector<State>> next_step(const State &s, const bool iss0,bool issimulate) {//走s0
     std::vector<State> v_walk;
     std::vector<State> v_board;
     State S;
@@ -499,35 +514,131 @@ pair<vector<State>,vector<State>> next_step(const State &s, bool iss0) {//走s0
         }
     }
     // for board only put beside cheese
-    for(int i = 1; i <= 15;i+=2){
-        for(int j = 1; j <= 15;j+=2){
-           //vertical
-           if(!s.b[i][j]&&!s.b[i-1][j]&&!s.b[i+1][j]&&
-           make_pair(i,j)!=s.s0_index&&make_pair(i-1,j)!=s.s0_index&&make_pair(i+1,j)!=s.s0_index&&
-           make_pair(i,j)!=s.s1_index&&make_pair(i-1,j)!=s.s1_index&& make_pair(i+1,j)!=s.s1_index&&
-           bfs(make_pair(1,make_pair((i-1)>>1,(j-1)>>1)),s)){
-               S=s;
-               S.step++;
-               S.action=make_pair(1,make_pair((i-1)>>1,(j-1)>>1));
-               S.add_board(make_pair(1,make_pair((i-1)>>1,(j-1)>>1)));
-               iss0 ? --S.s0_board_num:--S.s1_board_num;
-               v_board.push_back(S);
-           }
-           //horizon
-           if(!s.b[i][j]&&!s.b[i][j-1]&&!s.b[i][j+1]&&
-           make_pair(i,j)!=s.s0_index&&make_pair(i,j+1)!=s.s0_index&&make_pair(i,j-1)!=s.s0_index&&
-           make_pair(i,j)!=s.s1_index&&make_pair(i,j-1)!=s.s1_index&&make_pair(i,j+1)!=s.s1_index&&
-           bfs(make_pair(2, make_pair((i-1)>>1,(j-1)>>1)),s)){
-               S=s;
-               S.step++;
-               S.action=make_pair(2, make_pair((i-1)>>1,(j-1)>>1));
-               S.add_board(make_pair(2, make_pair((i-1)>>1,(j-1)>>1)));
-               iss0 ? --S.s0_board_num:--S.s1_board_num;
-               v_board.push_back(S);
-           }
-        }
-    }
+    int x[2],y[2];
+//    x[0]=s.s0_index.first;
+//    y[0]=s.s0_index.second;
+//    x[1]=s.s1_index.first;
+//    y[1]=s.s1_index.second;
+    int dx_=(iss0?1:-1);//放在对手前进方向
+    bool add_next_line=true;
+//    if(x[iss0]+dx_>=1&&x[iss0]+dx_<=15) {
+//        for (int i = 1; i <= 15; i += 2) {//horizon
+//            if (!s.b[x[iss0] + dx_][i - 1] && !s.b[x[iss0] + dx_][i] && !s.b[x[iss0] + dx_][i + 1]&&
+//            bfs(make_pair(2, make_pair((x[iss0] + dx_ - 1) >> 1, (i - 1) >> 1)),s)) {
+//                S = s;
+//                if (iss0)S.s0_board_num--;
+//                else S.s1_board_num--;
+//                S.step++;
+//                S.add_board(make_pair(2, make_pair((x[iss0] + dx_ - 1) >> 1, (i - 1) >> 1)));
+//                S.action = make_pair(2, make_pair((x[iss0] + dx_ - 1) >> 1, (i - 1) >> 1));
+//                cerr << "attack other " << S.action.first << ' ' << S.action.second.first << ' ' << S.action.second.second << endl;
+//                v_board.push_back(S);
+//                add_next_line = false;
+//            }
+//        }
+//        if (add_next_line) {//本行放满,看下一行
+//            if (x[iss0] + 3 * dx_ >= 1 && x[iss0] + 3 * dx_ <= 15) {
+//                for (int i = 15; i >= 1; i -= 2) {
+//                    if (!s.b[x[iss0] + 3 * dx_][i - 1] && !s.b[x[iss0] + 3 * dx_][i] &&
+//                        !s.b[x[iss0] + 3 * dx_][i + 1] &&
+//                        bfs(make_pair(2, make_pair((x[iss0] + 3 * dx_ - 1) >> 1, (i - 1) >> 1)), s)) {
+//                        S = s;
+//                        if (iss0)S.s0_board_num--;
+//                        else S.s1_board_num--;
+//                        S.step++;
+//                        S.add_board(make_pair(2, make_pair((x[iss0] + 3 * dx_ - 1) >> 1, (i - 1) >> 1)));
+//                        S.action = make_pair(2, make_pair((x[iss0] + 3 * dx_ - 1) >> 1, (i - 1) >> 1));
+//                        v_board.push_back(S);
+//                    }
+//                }
+//            }
+//        }
+//            dx_=1;
+//            int dy_=-1;
+//            cerr << "vertical " << endl;
+//            for(int i = 0; i < 4; ++i){//vertical
+//                if(x[iss0]+dx_>=1&&x[iss0]+dx_<=15&&y[iss0]+dy_>=1&&y[iss0]+dy_<=15){
+//                    if(!s.b[x[iss0]+dx_][y[iss0]+dy_]&&!s.b[x[iss0]+dx_-1][y[iss0]+dy_]&&!s.b[x[iss0]+dx_+1][y[iss0]+dy_]&&
+//                    bfs(make_pair(1,make_pair((x[iss0]+dx_-1)>>1,(y[iss0]+dy_-1)>>1)),s)){
+//                        S=s;
+//                        if(iss0)S.s0_board_num--;
+//                        else S.s1_board_num--;
+//                        S.step++;
+//                        S.add_board(make_pair(1,make_pair((x[iss0]+dx_-1)>>1,(y[iss0]+dy_-1)>>1)));
+//                        S.action=make_pair(1,make_pair((x[iss0]+dx_-1)>>1,(y[iss0]+dy_-1)>>1));
+//                        v_board.push_back(S);
+//                    }
+//                }
+//                if(i==0)dx_=-dx_;
+//                else if(i==1) dy_=-dy_;
+//                else dx_=-dx_;
+//            }
+//    }
 
+    //自己身后
+//    dx_=(iss0?1:-1);
+//    x[0]=s.s1_index.first;
+//    x[1]=s.s0_index.first;
+//    y[0]=s.s1_index.second;
+//    y[1]=s.s0_index.second;
+//    add_next_line=true;
+//    cerr << "it's me" <<endl;
+//    cerr << iss0 << ' ' << x[iss0] << ' ' << dx_ << endl;
+//    if(x[iss0]+dx_>=1&&x[iss0]+dx_<=15){
+//        for(int i = 1; i <= 15;i+=2){
+//            if(!s.b[x[iss0]+dx_][i]&&!s.b[x[iss0]+dx_][i-1]&&!s.b[x[iss0]+dx_][i+1]&&
+//            bfs(make_pair(2,make_pair((x[iss0]+dx_-1)>>1,(i-1)>>1)),s)){
+//                cerr << "QAQ " << endl;
+//                S=s;
+//                if(iss0)S.s0_board_num--;
+//                else S.s1_board_num--;
+//                S.step++;
+//                S.add_board(make_pair(2,make_pair((x[iss0]+dx_-1)>>1,(i-1)>>1)));
+//                S.action=make_pair(2,make_pair((x[iss0]+dx_-1)>>1,(i-1)>>1));
+//                cerr << "me back " << S.action.first << ' ' << S.action.second.first<<' '<<S.action.second.second << endl;
+//                v_board.push_back(S);
+//                add_next_line=false;
+//            }
+//        }
+//        cerr << "me next " << endl;
+//        if(add_next_line){
+//           if(x[iss0]+3*dx_>=1&&x[iss0]+3*dx_<=15){
+//               for(int i = 1; i <= 15; i+=2){
+//                   if(!s.b[x[iss0]+3*dx_][i]&&!s.b[x[iss0]+3*dx_][i-1]&&!s.b[x[iss0]+3*dx_][i+1]&&
+//                   bfs(make_pair(2,make_pair((x[iss0]+3*dx_-1)>>1,(i-1)>>1)),s)){
+//                       S=s;
+//                       if(iss0)S.s0_board_num--;
+//                       else S.s1_board_num--;
+//                       S.step++;
+//                       cerr << "WUWUWU" << endl;
+//                       S.add_board(make_pair(2,make_pair((x[iss0]+3*dx_-1)>>1,(i-1)>>1)));
+//                       S.action=make_pair(2,make_pair((x[iss0]+3*dx_-1)>>1,(i-1)>>1));
+//                       v_board.push_back(S);
+//                   }
+//               }
+//           }
+//        }
+//        dx_=1;
+//        int dy_=-1;
+//        for(int i = 0; i < 4; ++i){//vertical
+//            if(x[iss0]+dx_>=1&&x[iss0]+dx_<=15&&y[iss0]+dy_>=1&&y[iss0]+dy_<=15){
+//                if(!s.b[x[iss0]+dx_][y[iss0]+dy_]&&!s.b[x[iss0]+dx_-1][y[iss0]+dy_]&&!s.b[x[iss0]+dx_+1][y[iss0]+dy_]&&
+//                bfs(make_pair(1,make_pair((x[iss0]+dx_-1)>>1,(y[iss0]+dy_-1)>>1)),s)){
+//                    S=s;
+//                    if(iss0)S.s0_board_num--;
+//                    else S.s1_board_num--;
+//                    S.step++;
+//                    S.add_board(make_pair(1,make_pair((x[iss0]+dx_-1)>>1,(y[iss0]+dy_-1)>>1)));
+//                    S.action=make_pair(1,make_pair((x[iss0]+dx_-1)>>1,(y[iss0]+dy_-1)>>1));
+//                    v_board.push_back(S);
+//                }
+//            }
+//            if(i==0)dx_=-dx_;
+//            else if(i==1) dy_=-dy_;
+//            else dx_=-dx_;
+//        }
+//    }
+//    cerr << "return next_step" << endl;
     return make_pair(v_walk,v_board);
 }
 
@@ -543,7 +654,6 @@ public:
         int board1;
         int dist0;
         int dist1;
-
         Ans() {}
         Ans(int b1, int b0, int d1, int d0) : board0(b0), board1(b1), dist0(d0), dist1(d1) {}
     };
@@ -563,13 +673,14 @@ public:
         pair<double,Ans> ans;
         if (!tree[s].ismet) {// first time met add sons
             tree[s].ismet = true;
-            tree[s].son = next_step(s, iss0);
+            tree[s].son = next_step(s, iss0,0);
+            cerr << "%^%^%"<<endl;
             tree[s].prefer_son = tree[s].son.first[0];
 //            cerr << "size " << tree[s].son.size() << endl;
         }
         if (!tree[s].isexpanded) {
             pair<vector<int>,vector<int>> unmet_son;
-            cerr << "not expanded! " << tree[s].son.second.size() << endl;
+            cerr << "not expanded! " <<s.step<<' '<< tree[s].son.second.size() << endl;
             int i_=0;
             for (auto i = tree[s].son.first.begin(); i != tree[s].son.first.end(); ++i) {
                 if (!tree[*i].ismet) {//add unmet son
@@ -589,29 +700,33 @@ public:
             } else {
                 int iswalk=0;
                 if(unmet_son.first.size())iswalk=1;//存在走子的就先走子
-                if(iswalk&&unmet_son.first.size()){
+                if(iswalk){
                     int size = unmet_son.first.size();
                     int seed = mt_rand() % size;
-                    cerr << "qwqqq" << seed<<' '<<size<<endl;
+                    cerr << "&&&&&&&&" << seed<<' '<<size<<endl;
                     ans = Simulation(tree[s].son.first[unmet_son.first[seed]],!iss0);//random expand<simulation's result, simulation's state>
-                    cerr << "qw" << endl;
+                    cerr << "########" << endl;
                     if (ans.first == -1)return make_pair(-1,ans.second);
                     tree[tree[s].son.first[unmet_son.first[seed]]].ismet = true;
-                    tree[tree[s].son.first[unmet_son.first[seed]]].son = next_step(tree[s].son.first[unmet_son.first[seed]],!iss0);
+                    tree[tree[s].son.first[unmet_son.first[seed]]].son = next_step(tree[s].son.first[unmet_son.first[seed]],!iss0,0);
+                    cerr << "()()()&&&" << endl;
                     tree[tree[s].son.first[unmet_son.first[seed]]].prefer_son = tree[tree[s].son.first[unmet_son.first[seed]]].son.first[0];
-                    tree[tree[s].son.first[unmet_son.first[seed]]].UCT = cal_UCT(tree[tree[s].son.first[unmet_son.first[seed]]].N++, tree[tree[s].son.first[unmet_son.first[seed]]].Q += (ans.first),
+                    tree[tree[s].son.first[unmet_son.first[seed]]].UCT = cal_UCT(++tree[tree[s].son.first[unmet_son.first[seed]]].N, tree[tree[s].son.first[unmet_son.first[seed]]].Q += (ans.first),
                                                         tree[s].N + 1);
                 }
                 else{
                     cerr << "put board " << endl;
                     int size=unmet_son.second.size();
                     int seed = mt_rand()%size;
+                    cerr << "%%%%%" << endl;
                     ans = Simulation(tree[s].son.second[unmet_son.second[seed]],!iss0);
+                    cerr << "@@@@@@@@@" << endl;
                     if (ans.first == -1)return make_pair(-1,ans.second);
                     tree[tree[s].son.second[unmet_son.second[seed]]].ismet = true;
-                    tree[tree[s].son.second[unmet_son.second[seed]]].son = next_step(tree[s].son.second[unmet_son.second[seed]],!iss0);
+                    tree[tree[s].son.second[unmet_son.second[seed]]].son = next_step(tree[s].son.second[unmet_son.second[seed]],!iss0,0);
+                    cerr << "@@@!!!*(*" << endl;
                     tree[tree[s].son.second[unmet_son.second[seed]]].prefer_son = tree[tree[s].son.second[unmet_son.second[seed]]].son.second[0];
-                    tree[tree[s].son.second[unmet_son.second[seed]]].UCT = cal_UCT(tree[tree[s].son.second[unmet_son.second[seed]]].N++, tree[tree[s].son.second[unmet_son.second[seed]]].Q += (ans.first),
+                    tree[tree[s].son.second[unmet_son.second[seed]]].UCT = cal_UCT(++tree[tree[s].son.second[unmet_son.second[seed]]].N, tree[tree[s].son.second[unmet_son.second[seed]]].Q += (ans.first),
                                                                                  tree[s].N + 1);
                 }
                 return make_pair(backpropagation(ans.second,iss0),ans.second);
@@ -636,28 +751,13 @@ public:
             }
             ans = Selection(tree[s].prefer_son, !iss0);
             if (ans.first != -1) {
-                tree[tree[s].prefer_son].UCT = cal_UCT(tree[tree[s].prefer_son].N++,
+                tree[tree[s].prefer_son].UCT = cal_UCT(++tree[tree[s].prefer_son].N,
                                                        tree[tree[s].prefer_son].Q += (ans.first),
                                                        tree[s].N + 1);
                 return make_pair(backpropagation(ans.second,iss0),ans.second);
             }
             return make_pair(-1,ans.second);
         }
-    }
-
-    void print_board(const State &s) const {
-        cerr << "-----------------------" << endl;
-        cerr << s.s0_index.first / 2 << ' ' << s.s0_index.second / 2 << ' ' << s.s1_index.first / 2 << ' '
-             << s.s1_index.second / 2 << endl;
-        for (int i = 0; i < 17; ++i) {
-            for (int j = 0; j < 17; ++j) {
-                if (s.s0_index.first == i && s.s0_index.second == j)cerr << 'A' << ' ';
-                else if (s.s1_index.first == i && s.s1_index.second == j)cerr << 'B' << ' ';
-                else cerr << (s.b[i][j] ? '|' : '.') << ' ';
-            }
-            cerr << endl;
-        }
-        cerr << "------------------------------" << endl;
     }
 
     pair<double,Ans> judge_state(const State &s, const bool &iss0) {
@@ -693,7 +793,7 @@ public:
                 pair<int, int> head = q[h++];
                 const int x = head.first;
                 const int y = head.second;
-                cerr << "ququq "<<x << ' '<<y << endl;
+//                cerr << "ququq "<<x << ' '<<y << endl;
                 for (int i = 0; i < 4; ++i) {
                     if (x + dx[i] >= 0 && x + dx[i] <= 16 && y + dy[i] >= 0 && y + dy[i] <= 16 && !s.b[x+dx[i]][y+dy[i]]) {
                         int x_ = x + 2 * dx[i];
@@ -751,16 +851,21 @@ public:
 //            }
         }
         cerr << "hereee" <<mi_s1<<' '<<mi_s0<< endl;
+        pair<double,double> ans;
         if (!iss0) {//run s0
-//            cerr << "win rate&& " << mi_s1 << ' ' << mi_s0 << ' ' << s.s0_board_num << ' '
-//                 << mi_s1 + (10 - s.s0_board_num) * 0.05 / (mi_s0 + mi_s1 + 0.5) << endl;
+            cerr << "win rate&& " << mi_s1 << ' ' << mi_s0 << ' ' << s.s0_board_num << ' '
+                 << ((mi_s1) + (s.s1_board_num) * BOARD_WEIGHT) /
+                    (mi_s0 + mi_s1 + (s.s0_board_num + s.s1_board_num) * BOARD_WEIGHT+5) << endl;
+            Ans ans(s.s1_board_num,s.s0_board_num,mi_s1,mi_s0);
             return make_pair(((mi_s1) + (s.s1_board_num) * BOARD_WEIGHT) /
-                   (mi_s0 + mi_s1 + (s.s0_board_num + s.s1_board_num) * BOARD_WEIGHT+5),Ans(s.s1_board_num,s.s0_board_num,mi_s1,mi_s0));
+                   (mi_s0 + mi_s1 + (s.s0_board_num + s.s1_board_num) * BOARD_WEIGHT+5),ans);
         } else {
-//            cerr << "win rate " << mi_s1 << ' ' << mi_s0 << ' ' << s.s1_board_num << ' '
-//                 << mi_s0 + (10 - s.s1_board_num) * 0.05 / (mi_s0 + mi_s1 + 0.5) << endl;
+            cerr << "win rate " << mi_s1 << ' ' << mi_s0 << ' ' << s.s1_board_num << ' '
+                 << ((mi_s0) + (s.s0_board_num) * BOARD_WEIGHT) /
+                    (mi_s0 + mi_s1 + (s.s0_board_num + s.s1_board_num) * BOARD_WEIGHT+5)<< endl;
+            Ans ans(s.s1_board_num,s.s0_board_num,mi_s1,mi_s0);
             return make_pair(((mi_s0) + (s.s0_board_num) * BOARD_WEIGHT) /
-                   (mi_s0 + mi_s1 + (s.s0_board_num + s.s1_board_num) * BOARD_WEIGHT+5),Ans(s.s1_board_num,s.s0_board_num,mi_s1,mi_s0));
+                   (mi_s0 + mi_s1 + (s.s0_board_num + s.s1_board_num) * BOARD_WEIGHT+5),ans);
         }
     }
 
@@ -774,7 +879,7 @@ public:
         for (i = 0; i < SIMULATION; ++i) {
             ++cnt;
             cerr << i << '&' << endl;
-            pair<vector<State>,vector<State>> v = next_step(s0, a);
+            pair<vector<State>,vector<State>> v = next_step(s0, a,1);
             int iswalk=mt_rand()%2;
             if(iswalk){
                 int size = v.first.size();
@@ -839,8 +944,8 @@ public:
         }
         cerr << "()()()(" << endl;
         for (auto i = tree[state].son.second.begin(); i != tree[state].son.second.end(); ++i) {
-            cerr << tree[*i].UCT << ' ' << tree[*i].Q << ' ' << tree[*i].N << ' ' << i->s0_index.first / 2 << ' '
-                 << i->s0_index.second / 2 << ' ' << i->s1_index.first / 2 << ' ' << i->s1_index.second / 2 << endl;
+            cerr << tree[*i].UCT << ' ' << tree[*i].Q << ' ' << tree[*i].N << ' ' << (*i).action.first << ' '
+                 << (*i).action.second.first << ' ' << (*i).action.second.second <<endl;
         }
         cerr << "ans " << tree[state].prefer_son.s0_index.first/2 << ' ' <<tree[state].prefer_son.s0_index.second/2 << ' ' << tree[state].prefer_son.s1_index.first/2
              <<' ' << tree[state].prefer_son.s1_index.second/2 << endl;
@@ -868,7 +973,7 @@ std::pair<int, std::pair<int, int> > action(std::pair<int, std::pair<int, int> >
             state.s1_board_num--;
         }
     }
-
+//    print_board(state);
     state.step++;
     std::pair<int, std::pair<int, int>> loc0;
     if (ai_side && !state.s1_board_num || !ai_side && !state.s0_board_num) {
@@ -878,6 +983,7 @@ std::pair<int, std::pair<int, int> > action(std::pair<int, std::pair<int, int> >
     } else {
         loc0 = monte_tree.Tree_search();
     }
-    cerr << "TIME "<<(clock()-time_)<< endl;
+    cerr << "TIME&&&&& "<<(clock()-time_)<<' ' <<CLOCKS_PER_SEC<< endl;
+//    print_board(state);
     return loc0;
 }
