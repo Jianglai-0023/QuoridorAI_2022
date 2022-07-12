@@ -492,142 +492,208 @@ std::vector<State> next_step(const State &s, bool iss0) {//走s0
         }
     }
     // for board
-    /*策略：放在自己的身后；对方的身前；
-     * (2)放在自己周围以及对方周围，存在重复板子怎么办？
-     *横竖板随机
-     */
-    //放在对方周围
-
     if (!iss0) {//walk s1
         if (s.s1_board_num) {
-//            cerr << "*)(*)&"<<endl;
-            const int x_ = s.s0_index.first;
-            const int y_ = s.s0_index.second;
-//            if (vertical) {//vertical
-            int x = x_ - 1;
-            int y = y_ - 1;
-//                cerr << "^^^^^"<<x<<' '<<y<<endl;
-            if (x > 0 && y > 0 &&x<=15&&y<=15&& !s.b[x][y] && !s.b[x - 1][y] && !s.b[x + 1][y] &&
-                bfs(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)), s)) {//满足放板子条件
-//                    cerr << "<><><><>"<<endl;
-                S = s;
-                S.step = s.step + 1;
-                S.action = std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
-                S.add_board(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
-                --S.s1_board_num;
-//                    cerr << "other"<<endl;
-//                    debug_state(S,s);
-                v.push_back(S);
+            //对方身前
+            int x = s.s0_index.first;
+            int y = s.s0_index.second;
+            int dx_=-1;
+            if(x+dx_>=1&&x+dx_<=15){
+                for(int i = 1; i <= 15; i+=2){
+                    if(!s.b[x+dx_][i]&&!s.b[x+dx_][i-1]&&!s.b[x+dx_][i+1]&&
+                    bfs(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)),s)){//horizon
+                        S=s;
+                        S.step=s.step+1;
+                        S.action= make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1));
+                        S.add_board(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)));
+                        --S.s1_board_num;
+                        v.push_back(S);
+                    }
+                    else if(x+3*dx_>=1&&x+3*dx_<=15&&
+                    !s.b[x+3*dx_][i]&&!s.b[x+3*dx_][i-1]&&!s.b[x+3*dx_][i+1]&&
+                    bfs(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)),s)){
+                        S=s;
+                        S.step=s.step+1;
+                        S.action=make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1));
+                        S.add_board(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)));
+                        --S.s1_board_num;
+                        v.push_back(S);
+                    }
+                    if(x-1>=1&&x-1<=15){//vertical
+                        if(!s.b[x-1][i]&&!s.b[x][i]&&!s.b[x-2][i]&&
+                           bfs(make_pair(1,make_pair((x-2)>>1,(i-1)>>1)),s)){
+                            S=s;
+                            S.step=s.step+1;
+                            S.action=make_pair(1,make_pair((x-2)>>1,(i-1)>>1));
+                            S.add_board(make_pair(1,make_pair((x-2)>>1,(i-1)>>1)));
+                            --S.s1_board_num;
+                            v.push_back(S);
+                        }
+                    }
+                    if(x+1>=1&&x+1<=15){
+                        if(!s.b[x+1][i]&&!s.b[x][i]&&!s.b[x+2][i]&&
+                           bfs(make_pair(1,make_pair(x>>1,(i-1)>>1)),s)){
+                            S=s;
+                            S.step=s.step+1;
+                            S.action=make_pair(1,make_pair(x>>1,(i-1)>>1));
+                            S.add_board(make_pair(1,make_pair(x>>1,(i-1)>>1)));
+                            --S.s1_board_num;
+                            v.push_back(S);
+                        }
+                    }
+                }
             }
-            x = x_ - 1;
-            y = y_ + 1;
-//                cerr<<"@@@@@@" << endl;
-            if (x > 0 &&x<=15&&y>0&& y < 16 && !s.b[x][y] && !s.b[x - 1][y] && !s.b[x + 1][y] &&
-                bfs(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)), s)) {
-                S = s;
-                S.step = s.step + 1;
-                S.action = std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
-                S.add_board(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
-                --S.s1_board_num;
-//                    cerr << "other"<<endl;
-//                    debug_state(S,s);
-                v.push_back(S);
+            //自己身后
+            x=s.s1_index.first;
+            y=s.s1_index.second;
+            if(x+dx_>=1&&x+dx_<=15){
+                for(int i = 1; i <= 15; i+=2){
+                    if(!s.b[x+dx_][i]&&!s.b[x+dx_][i-1]&&!s.b[x+dx_][i+1]&&
+                       bfs(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)),s)){
+                        S=s;
+                        S.step=s.step+1;
+                        S.action= make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1));
+                        S.add_board(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)));
+                        --S.s1_board_num;
+                        v.push_back(S);
+                    }
+                    else if(x+3*dx_>=1&&x+3*dx_<=15&&
+                            !s.b[x+3*dx_][i]&&!s.b[x+3*dx_][i-1]&&!s.b[x+3*dx_][i+1]&&
+                            bfs(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)),s)){
+                        S=s;
+                        S.step=s.step+1;
+                        S.action=make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1));
+                        S.add_board(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)));
+                        --S.s1_board_num;
+                        v.push_back(S);
+                    }
+                    if(x+2>=1&&x+2<=15){//vertical
+                        if(!s.b[x+1][i]&&!s.b[x+2][i]&&!s.b[x+3][i]&&
+                           bfs(make_pair(1,make_pair((x+1)>>1,(i-1)>>1)),s)){
+                            S=s;
+                            S.step=s.step+1;
+                            S.action=make_pair(1,make_pair((x+1)>>1,(i-1)>>1));
+                            S.add_board(make_pair(1,make_pair((x+1)>>1,(i-1)>>1)));
+                            --S.s1_board_num;
+                            v.push_back(S);
+                        }
+                    }
+                    if(x+1>=1&&x+1<=15){
+                        if(!s.b[x+1][i]&&!s.b[x][i]&&!s.b[x+2][i]&&
+                           bfs(make_pair(1,make_pair(x>>1,(i-1)>>1)),s)){
+                            S=s;
+                            S.step=s.step+1;
+                            S.action=make_pair(1,make_pair(x>>1,(i-1)>>1));
+                            S.add_board(make_pair(1,make_pair(x>>1,(i-1)>>1)));
+                            --S.s1_board_num;
+                            v.push_back(S);
+                        }
+                    }
+                }
             }
-//            } else {//horizon
-            x = x_ - 1;
-            y = y_ - 1;
-//                cerr<<"#########" << endl;
-            if (y > 0 && y < 16&&x > 0 && x < 16 && !s.b[x][y - 1] && !s.b[x][y] && !s.b[x][y + 1] &&
-                bfs(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)), s)) {
-                S = s;
-//                    debug_state(S,s);
-//                    cerr << "WUWUWUWU" << endl;
-                S.step = s.step + 1;
-                S.action = std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
-//                    debug_state(S,s);
-//                    cerr << "QAQQQ" << endl;
-                S.add_board(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
-//                    cerr << ((x - 1) >> 1)<<' ' << ((y - 1) >> 1)<<endl;
-                --S.s1_board_num;
-//                    cerr << "other"<<endl;
-//                    debug_state(S,s);
-                v.push_back(S);
-            }
-            x = x_ - 1;
-            y = y_ + 1;
-//                cerr << "%%%%%%%%%%%"<<endl;
-            if (y > 0 && y < 16&&x > 0 && x < 16 && !s.b[x][y - 1] && !s.b[x][y + 1] && !s.b[x][y] &&
-                bfs(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)), s)) {
-                S = s;
-                S.step = s.step + 1;
-                S.action = std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
-                S.add_board(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
-                --S.s1_board_num;
-//                    cerr << "other"<<endl;
-//                    debug_state(S,s);
-                v.push_back(S);
-            }
-//            }
         }
-    } else {//
+    }else {//walk s0
         if (s.s0_board_num) {
-            int x_ = s.s1_index.first;
-            int y_ = s.s1_index.second;
-//                srand((unsigned) time(NULL));
-            int vertical = mt_rand() % 2;
-//            if (vertical) {//vertical
-            int x = x_ + 1;
-            int y = y_ - 1;
-            if (x>0&&x < 16 && y > 0&&y<16 && !s.b[x - 1][y] && !s.b[x + 1][y] && !s.b[x][y] &&
-                bfs(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)), s)) {//满足放板子条件
-                S = s;
-                S.step = s.step + 1;
-                S.action = std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
-                S.add_board(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
-                --S.s0_board_num;
-//                    cerr << "other"<<endl;
-//                    debug_state(S,s);
-                v.push_back(S);
+            //在对方周围放板
+            int x = s.s1_index.first;
+            int y = s.s1_index.second;
+            int dx_=1;
+            if(x+dx_>=1&&x+dx_<=15){
+                for(int i = 1; i <= 15; i+=2){
+                    if(!s.b[x+dx_][i]&&!s.b[x+dx_][i-1]&&!s.b[x+dx_][i+1]&&
+                       bfs(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)),s)){//horizon
+                        S=s;
+                        S.step=s.step+1;
+                        S.action= make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1));
+                        S.add_board(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)));
+                        --S.s0_board_num;
+                        v.push_back(S);
+                    }
+                    else if(x+3*dx_>=1&&x+3*dx_<=15&&
+                            !s.b[x+3*dx_][i]&&!s.b[x+3*dx_][i-1]&&!s.b[x+3*dx_][i+1]&&
+                            bfs(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)),s)){
+                        S=s;
+                        S.step=s.step+1;
+                        S.action=make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1));
+                        S.add_board(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)));
+                        --S.s0_board_num;
+                        v.push_back(S);
+                    }
+                    if(x-1>=1&&x-1<=15){//vertical
+                        if(!s.b[x-1][i]&&!s.b[x][i]&&!s.b[x-2][i]&&
+                           bfs(make_pair(1,make_pair((x-2)>>1,(i-1)>>1)),s)){
+                            S=s;
+                            S.step=s.step+1;
+                            S.action=make_pair(1,make_pair((x-2)>>1,(i-1)>>1));
+                            S.add_board(make_pair(1,make_pair((x-2)>>1,(i-1)>>1)));
+                            --S.s0_board_num;
+                            v.push_back(S);
+                        }
+                    }
+                    if(x+1>=1&&x+1<=15){
+                        if(!s.b[x+1][i]&&!s.b[x][i]&&!s.b[x+2][i]&&
+                           bfs(make_pair(1,make_pair(x>>1,(i-1)>>1)),s)){
+                            S=s;
+                            S.step=s.step+1;
+                            S.action=make_pair(1,make_pair(x>>1,(i-1)>>1));
+                            S.add_board(make_pair(1,make_pair(x>>1,(i-1)>>1)));
+                            --S.s0_board_num;
+                            v.push_back(S);
+                        }
+                    }
+                }
             }
-            x = x_ + 1;
-            y = y_ + 1;
-            if (x>0&&x < 16&&y>0 && y < 16 && !s.b[x - 1][y] && !s.b[x][y] && !s.b[x + 1][y] &&
-                bfs(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)), s)) {
-                S = s;
-                S.step = s.step + 1;
-                S.action = std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
-                S.add_board(std::make_pair(1, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
-                --S.s0_board_num;
-//                    cerr << "other"<<endl;
-//                    debug_state(S,s);
-                v.push_back(S);
-            }
-//            } else {//horizon
-            x = x_ + 1;
-            y = y_ - 1;
-            if (y > 0 && y < 16&& x > 0 && x < 16&& !s.b[x][y - 1] && !s.b[x][y] && !s.b[x][y + 1] &&
-                bfs(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)), s)) {
-                S = s;
-                S.step = s.step + 1;
-                S.action = std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
-                S.add_board(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
-                --S.s0_board_num;
-//                    cerr << "other"<<endl;
-//                    debug_state(S,s);
-                v.push_back(S);
-            }
-            x = x_ + 1;
-            y = y_ + 1;
-            if (y > 0 && y < 16&&x > 0 && x < 16 && !s.b[x][y - 1] && !s.b[x][y] && !s.b[x][y + 1] &&
-                bfs(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)), s)) {
-                S = s;
-                S.step = s.step + 1;
-                S.action = std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1));
-                S.add_board(std::make_pair(2, std::make_pair((x - 1) >> 1, (y - 1) >> 1)));
-                --S.s0_board_num;
-                v.push_back(S);
+            //在自己周围放板
+            x=s.s0_index.first;
+            y=s.s0_index.second;
+            if(x+dx_>=1&&x+dx_<=15){
+                for(int i = 1; i <= 15; i+=2){
+                    if(!s.b[x+dx_][i]&&!s.b[x+dx_][i-1]&&!s.b[x+dx_][i+1]&&//horizon
+                       bfs(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)),s)){
+                        S=s;
+                        S.step=s.step+1;
+                        S.action= make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1));
+                        S.add_board(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)));
+                        --S.s0_board_num;
+                        v.push_back(S);
+                    }
+                    else if(x+3*dx_>=1&&x+3*dx_<=15&&
+                            !s.b[x+3*dx_][i]&&!s.b[x+3*dx_][i-1]&&!s.b[x+3*dx_][i+1]&&
+                            bfs(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)),s)){
+                        S=s;
+                        S.step=s.step+1;
+                        S.action=make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1));
+                        S.add_board(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)));
+                        --S.s0_board_num;
+                        v.push_back(S);
+                    }
+                    if(x-2>=1&&x-2<=15){//vertical
+                        if(!s.b[x-1][i]&&!s.b[x-2][i]&&!s.b[x-3][i]&&
+                           bfs(make_pair(1,make_pair((x-3)>>1,(i-1)>>1)),s)){
+                            S=s;
+                            S.step=s.step+1;
+                            S.action=make_pair(1,make_pair((x-3)>>1,(i-1)>>1));
+                            S.add_board(make_pair(1,make_pair((x-3)>>1,(i-1)>>1)));
+                            --S.s0_board_num;
+                            v.push_back(S);
+                        }
+                    }
+                    if(x-1>=1&&x-1<=15){
+                        if(!s.b[x-1][i]&&!s.b[x][i]&&!s.b[x-2][i]&&
+                           bfs(make_pair(1,make_pair((x-2)>>1,(i-1)>>1)),s)){
+                            S=s;
+                            S.step=s.step+1;
+                            S.action=make_pair(1,make_pair((x-2)>>1,(i-1)>>1));
+                            S.add_board(make_pair(1,make_pair((x-2)>>1,(i-1)>>1)));
+                            --S.s0_board_num;
+                            v.push_back(S);
+                        }
+                    }
+                }
             }
         }
+
+
     }
     return v;
 }
