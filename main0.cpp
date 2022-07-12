@@ -490,10 +490,6 @@ std::vector<State> next_step(const State &s, bool iss0) {//走s0
             }
 
         }
-//        cerr << "cheese " << i << endl;
-//for(int j = 0; j < WALK_WEIGHT; ++j){
-
-//}
     }
     // for board
     /*策略：放在自己的身后；对方的身前；
@@ -697,7 +693,6 @@ public:
 //            return -1;
         }
 
-
     void print_board(const State &s) const {
         cerr << "-----------------------" << endl;
         cerr << s.s0_index.first/2 << ' ' << s.s0_index.second/2<<' '<<s.s1_index.first/2<<' ' << s.s1_index.second/2<< endl;
@@ -711,6 +706,7 @@ public:
         }
         cerr << "------------------------------" << endl;
     }
+
     Ans judge_state(const State &s,const bool &iss0){
         const int x1=s.s1_index.first;
         const int y1=s.s1_index.second;
@@ -773,8 +769,8 @@ public:
 //        cerr << "hereee" << endl;
 //if(s.b[11][7])cerr << "QWWQ" << endl;
 Ans ans;
-        ans.s0win=(mi_s1)/(mi_s0);
-        ans.s1win=(mi_s0)/(mi_s1);
+        ans.s0win=mi_s1/mi_s0;
+        ans.s1win=mi_s0/mi_s1;
 cerr << "state_judge " << mi_s0 <<' ' << mi_s1<<' '<<s.s0_index.first/2 <<' '<<s.s0_index.second/2<<' '<<s.s1_index.first/2<<' '<<s.s1_index.second/2 << endl;
 //        if(iss0){//run s0
            cerr <<"s0 win rate "<< s.s0_index.first/2 << ' ' << s.s0_index.second/2 << ' ' <<(mi_s1)/(mi_s0)<<endl;
@@ -786,6 +782,7 @@ cerr << "state_judge " << mi_s0 <<' ' << mi_s1<<' '<<s.s0_index.first/2 <<' '<<s
 //        }
 return ans;
     }
+
     Ans Simulation(const State &s, bool iss0) {
         State s0 = s;
         bool win;
