@@ -11,9 +11,10 @@
 std::mt19937 mt_rand(time(nullptr) ^ 19260817);
 extern int ai_side;
 clock_t time_;
-int cnt=0;
 int STEP = -1;
 int debug_ = 0;
+int num_simulate=0;
+int tree_depth=0;
 std::string ai_name = "back to 640";
 const int CIRCLE = 1000;
 const int WALK_WEIGHT = 50;
@@ -80,8 +81,8 @@ public:
     }
 
     bool add_board(std::pair<int, std::pair<int, int> > loc) {//保证这里放入的board一定合法
-        int x = 2 * loc.second.first + 1;
-        int y = 2 * loc.second.second + 1;
+        int x = (loc.second.first<<1) + 1;
+        int y = (loc.second.second<<1) + 1;
         if (loc.first == 1) {
             if ((!b[x][y] && !b[x + 1][y] && !b[x - 1][y])) {
                 b[x][y] = b[x + 1][y] = b[x - 1][y] = 1;
@@ -102,9 +103,8 @@ struct Node {
     double UCT = 0;
     bool ismet = false;//是否访问过
     bool isexpanded = false;
-//    int unexpand_num = 0;
-    State prefer_son;
     std::vector<State> son;
+    vector<State>::iterator head;
 };
 
 struct Hash {
@@ -151,20 +151,20 @@ pair<int, pair<int, int>> shortest_path(const State &s, bool iss0) {
                 y_ += dy[i];
                 if (make_pair(x_, y_) == s.s1_index) {//与走子重合
                     if (x_ + dx[i] >= 0 && x_ + dx[i] <= 16 && y_ + dy[i] >= 0 && y_ + dy[i] <= 16 &&
-                        !s.b[x_ + dx[i]][y_ + dy[i]] && (dist[x_ + 2*dx[i]][y_ + 2*dy[i]] == -1 ||
-                                                         dist[x_ + 2*dx[i]][y_ + 2*dy[i]] > dist[ind.x][ind.y] + 1)) {//对面
-                        dist[x_ + 2*dx[i]][y_ + 2*dy[i]] = dist[ind.x][ind.y] + 1;
-                        path[x_ + 2*dx[i]][y_ + 2*dy[i]].x = ind.x;
-                        path[x_ + 2*dx[i]][y_ + 2*dy[i]].y = ind.y;
-                        q[++t] = index(x_ + 2*dx[i], y_ + 2*dy[i]);
+                        !s.b[x_ + dx[i]][y_ + dy[i]] && (dist[x_ + (dx[i]<<1)][y_ + (dy[i]<<1)] == -1 ||
+                                                         dist[x_ + (dx[i]<<1)][y_ + (dy[i]<<1)] > dist[ind.x][ind.y] + 1)) {//对面
+                        dist[x_ + (dx[i]<<1)][y_ + (dy[i]<<1)] = dist[ind.x][ind.y] + 1;
+                        path[x_ + (dx[i]<<1)][y_ + (dy[i]<<1)].x = ind.x;
+                        path[x_ + (dx[i]<<1)][y_ + (dy[i]<<1)].y = ind.y;
+                        q[++t] = index(x_ + (dx[i]<<1), y_ + (dy[i]<<1));
                     } else {//两边
                         int dx_ = dy[i];
                         int dy_ = dx[i];
                         for (int j = 0; j < 2; ++j) {
                             if (x_ + dx_ >= 0 && x_ + dx_ <= 16 && y_ + dy_ >= 0 && y_ + dy_ <= 16 &&
-                                !s.b[x_ + dx_][y_ + dy_] && (dist[x_ + 2*dx_][y_ + 2*dy_] == -1 ||
-                                                             dist[x_ + 2*dx_][y_ + 2*dy_] > dist[ind.x][ind.y] + 1)) {
-                                dist[x_ + 2*dx_][y_ + 2*dy_] = dist[ind.x][ind.y] + 1;
+                                !s.b[x_ + dx_][y_ + dy_] && (dist[x_ + (dx_<<1)][y_ + (dy_<<1)] == -1 ||
+                                                             dist[x_ + (dx_<<1)][y_ + (dy_<<1)] > dist[ind.x][ind.y] + 1)) {
+                                dist[x_ + (dx_<<1)][y_ + (dy_<<1)] = dist[ind.x][ind.y] + 1;
                                 path[x_ + 2*dx_][y_ + 2*dy_].x = ind.x;
                                 path[x_ + 2*dx_][y_ + 2*dy_].y = ind.y;
                                 q[++t] = index(x_ + 2*dx_, y_ + 2*dy_);
@@ -241,14 +241,12 @@ pair<int, pair<int, int>> shortest_path(const State &s, bool iss0) {
                 }
                 else if (dist[x_][y_] == -1 || dist[x_][y_] > dist[ind.x][ind.y] + 1) {
                     dist[x_][y_] = dist[ind.x][ind.y] + 1;
-//                    cerr << "???" << dist[x_][y_] << ' ' << x_ / 2 << ' ' << y_ / 2 << endl;
                     path[x_][y_].x = ind.x;
                     path[x_][y_].y = ind.y;
                     q[++t] = index(x_, y_);
                 }
             }
         }
-//        cerr << "qwqqwq " << endl;
         int mi = 100;
         int index_y = 0;
         for (int i = 0; i < 17; ++i) {
@@ -257,41 +255,19 @@ pair<int, pair<int, int>> shortest_path(const State &s, bool iss0) {
                 index_y = i;
             }
         }
-//        cerr << "qwqqqqwq " << endl;
         int point_x = 16, point_y = index_y;
-//        cerr << "index_y " << index_y << endl;
-//        for (int i = 0; i < 17; i += 2) {
-//            for (int j = 0; j < 17; j += 2) {
-//                if(dist[i][j]==0x3f3f3f3f)cerr<<"+oo"<<' ';
-//                else cerr << setw(3) << dist[i][j] << ' ';
-//            }
-//            cerr << endl;
-//        }
-//        for (int i = 0; i < 17; ++i) {
-//            for (int j = 0; j < 17; ++j) {
-//                if (s.s0_index.first == i && s.s0_index.second == j || s.s1_index.first == i && s.s1_index.second == j)
-//                    cerr << "@";
-//                else cerr << (s.b[i][j] ? '#' : '.');
-//            }
-//            cerr << endl;
-//        }
-
-//        exit(0);
-//        cerr << "WWW" << x << ' ' << y << endl;
         while (path[point_x][point_y].x != x || path[point_x][point_y].y != y) {
-//            cerr << "&&%%" << point_x / 2 << ' ' << point_y / 2 << ' ' << path[point_x][point_y].x / 2 << ' '
-//                 << path[point_x][point_y].y / 2 << endl;
             int X = path[point_x][point_y].x;
             int Y = path[point_x][point_y].y;
             point_x = X;
             point_y = Y;
         }
-//        cerr << "qwwqwqwqqwwqq " << endl;
         return make_pair(0, make_pair(point_x >> 1, point_y >> 1));
     }
 }
 
 bool bfs(std::pair<int, std::pair<int, int>> board, const State &s) {//保证加入的板不会重叠交叉
+//    return true;
 //    cerr << "bfs"<<endl;
     int x = 2 * board.second.first + 1;
     int y = 2 * board.second.second + 1;
@@ -387,8 +363,8 @@ std::pair<int, int> map_node(std::pair<int, int> loc) {
     return std::make_pair(loc.first * 2, loc.second * 2);
 }
 
-std::vector<State> next_step(const State &s, bool iss0) {//走s0
-    std::vector<State> v;
+void next_step(const State &s, bool iss0, vector<State> &v) {//走s0
+//    std::vector<State> v;
     State S;
     for (int i = 0; i < 4; i++) {//for cheese
         int x, y;
@@ -501,7 +477,7 @@ std::vector<State> next_step(const State &s, bool iss0) {//走s0
             if(x+dx_>=1&&x+dx_<=15){
                 for(int i = 1; i <= 15; i+=2){
                     if(!s.b[x+dx_][i]&&!s.b[x+dx_][i-1]&&!s.b[x+dx_][i+1]&&
-                    bfs(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)),s)){//horizon
+                       bfs(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)),s)){//horizon
                         S=s;
                         S.step=s.step+1;
                         S.action= make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1));
@@ -510,8 +486,8 @@ std::vector<State> next_step(const State &s, bool iss0) {//走s0
                         v.push_back(S);
                     }
                     else if(x+3*dx_>=1&&x+3*dx_<=15&&
-                    !s.b[x+3*dx_][i]&&!s.b[x+3*dx_][i-1]&&!s.b[x+3*dx_][i+1]&&
-                    bfs(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)),s)){
+                            !s.b[x+3*dx_][i]&&!s.b[x+3*dx_][i-1]&&!s.b[x+3*dx_][i+1]&&
+                            bfs(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)),s)){
                         S=s;
                         S.step=s.step+1;
                         S.action=make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1));
@@ -692,72 +668,74 @@ std::vector<State> next_step(const State &s, bool iss0) {//走s0
                 }
             }
         }
-
-
     }
-    return v;
+    for(int i = v.size()-1;i>=0;i--){
+        int t=mt_rand()%(i+1);
+        swap(v[i],v[t]);
+    }
+//    return v;
 }
 
 class Monte_Tree {
 public:
     double cal_UCT(double Ni, double Qi, double N) {
-        return ((Qi / Ni) + 1.3 * pow((log(N) / Ni), 0.5));
+        return ((Qi / Ni) + 1.41 * pow(log(N) / Ni, 0.5));
     }
 
     Ans Selection(const State &s,const bool iss0) {//<win,UCTofson> //if 当前局面走的是s0
+        ++tree_depth;
         //TODO 删除不必要的节点
         Ans ans;
         if (!tree[s].ismet) {// first time met add sons
+            cerr << "unmet "<<s.step <<endl;
             tree[s].ismet = true;
-            tree[s].son = next_step(s, iss0);
-            tree[s].prefer_son = tree[s].son[0];
+            next_step(s, iss0,tree[s].son);
+            tree[s].head=tree[s].son.begin();
 //            cerr << "size " << tree[s].son.size() << endl;
         }
-        if (!tree[s].isexpanded) {
-            vector<State> unmet_son;
-//            cerr << "not expanded! " << s.step << endl;
-            for (auto i = tree[s].son.begin(); i != tree[s].son.end(); ++i) {
+        else if (!tree[s].isexpanded) {
+            cerr << "not expanded! " << s.step << endl;
+            auto i=tree[s].head;
+            for (; i != tree[s].son.end(); ++i) {
+//                cerr << "qwqqq "<<endl;
                 if (!tree[*i].ismet) {//add unmet son
-                    unmet_son.push_back(*i);
+//                    cerr << "WUWUWU" <<endl;
+                    ans= Simulation(*i,!iss0);
+                    double q=iss0? ans.s0win:ans.s1win;
+                    tree[*i].ismet = true;
+                    next_step(*i, !iss0,tree[*i].son);
+                    tree[*i].UCT = cal_UCT(tree[*i].N++, tree[*i].Q += q,
+                                                           tree[s].N + 1);
+                    tree[*i].head=tree[*i].son.begin();
+                    tree[s].head=++i;
+                    return ans;
                 }
             }
-            if(!unmet_son.size()){
+//            tree[s].head=i;
+            if(i==tree[s].son.end()){
                 tree[s].isexpanded=true;
-            }
-            else {
-                int size = unmet_son.size();
-                int seed = mt_rand() % size;
-                ans = Simulation(unmet_son[seed], !iss0);//random expand
-//                if (ans == -1)return -1;
-                double q=iss0? ans.s0win:ans.s1win;
-                tree[unmet_son[seed]].ismet = true;
-                tree[unmet_son[seed]].son = next_step(unmet_son[seed], !iss0);
-                tree[unmet_son[seed]].prefer_son = tree[unmet_son[seed]].son[0];
-                tree[unmet_son[seed]].UCT = cal_UCT(tree[unmet_son[seed]].N++, tree[unmet_son[seed]].Q += q,
-                                                    tree[s].N + 1);
-                return ans;
             }
         }
         if(tree[s].isexpanded){
             cerr << "expanded!" <<s.step<< endl;
             double max_uct = 0;
+            int index;
+            int i_=0;
             for (auto i = tree[s].son.begin(); i != tree[s].son.end(); ++i) {//update UCT
-                tree[*i].UCT = cal_UCT(tree[*i].N, tree[*i].Q, tree[s].N + 1);
                 if (max_uct < tree[*i].UCT) {
-                    tree[s].prefer_son = *i;
+                    index = i_;
                     max_uct = tree[*i].UCT;
                 }
+                ++i_;
             }
-            ans = Selection(tree[s].prefer_son, !iss0);
+            ans = Selection(tree[s].son[index], !iss0);
             double q=iss0?ans.s0win:ans.s1win;
-//            if (ans != -1) {
-                tree[tree[s].prefer_son].UCT = cal_UCT(tree[tree[s].prefer_son].N++,
-                                                       tree[tree[s].prefer_son].Q += q,
-                                                       tree[s].N + 1);
-                return ans;
-            }
-//            return -1;
+            tree[tree[s].son[index]].UCT = cal_UCT(tree[tree[s].son[index]].N++,
+                                                   tree[tree[s].son[index]].Q += q,
+                                                   tree[s].N + 1);
+            return ans;
         }
+    }
 
     void print_board(const State &s) const {
         cerr << "-----------------------" << endl;
@@ -778,7 +756,7 @@ public:
         const int y1=s.s1_index.second;
         const int x0=s.s0_index.first;
         const int y0=s.s0_index.second;
-        cerr << x1<<' ' << y1 << ' ' << x0 << ' ' << y0 << endl;
+//        cerr << x1<<' ' << y1 << ' ' << x0 << ' ' << y0 << endl;
         int dist[17][17];
         double mi_s0=100;
         double mi_s1=100;
@@ -807,18 +785,18 @@ public:
                         int y_=y+2*dy[i];
                         if(h==2&&(make_pair(x_,y_)==s.s0_index||make_pair(x_,y_)==s.s1_index)){//TODO 可以跳的情况
                             if(x_+dx[i]>=1&&x_+dx[i]<=15&&y_+dy[i]>=1&&y_+dy[i]<=15&&
-                            !s.b[x_+dx[i]][y_+dy[i]]&&
-                            dist[x_+2*dx[i]][y_+2*dy[i]]>dist[x][y]+1){
-                              dist[x_+2*dx[i]][y_+2*dy[i]]=dist[x][y]+1;
-                              q[++t]=make_pair(x_+2*dx[i],y_+2*dy[i]);
+                               !s.b[x_+dx[i]][y_+dy[i]]&&
+                               dist[x_+2*dx[i]][y_+2*dy[i]]>dist[x][y]+1){
+                                dist[x_+2*dx[i]][y_+2*dy[i]]=dist[x][y]+1;
+                                q[++t]=make_pair(x_+2*dx[i],y_+2*dy[i]);
                             }
                             else if(dist[x_+2*dx[i]][y_+2*dy[i]]>dist[x][y]+1){
                                 int dx_=dy[i];
                                 int dy_=dx[i];
                                 for(int j = 0; j < 2; ++j){
                                     if(x_+dx_>=1&&x_+dx_<=15&&y_+dy_>=1&&y_+dy_<=15&&
-                                    !s.b[x_+dx_][y_+dy_]&&
-                                    dist[x_+2*dx_][y_+2*dy_]<dist[x][y]+1){
+                                       !s.b[x_+dx_][y_+dy_]&&
+                                       dist[x_+2*dx_][y_+2*dy_]<dist[x][y]+1){
                                         dist[x_+2*dx_][y_+2*dy_]=dist[x][y]+1;
                                         q[++t]=make_pair(x_+2*dx_,y_+2*dy_);
                                     }
@@ -857,74 +835,51 @@ public:
         }
 //        cerr << "hereee" << endl;
 //if(s.b[11][7])cerr << "QWWQ" << endl;
-Ans ans;
-        ans.s0win=(mi_s1/(mi_s0*1.1));
-        ans.s1win=(mi_s0/(mi_s1*1.1));
-cerr << "state_judge " << mi_s0 <<' ' << mi_s1<<' '<<s.s0_index.first/2 <<' '<<s.s0_index.second/2<<' '<<s.s1_index.first/2<<' '<<s.s1_index.second/2 << endl;
+        Ans ans;
+        ans.s0win=(mi_s1/(mi_s0));
+        ans.s1win=(mi_s0/(mi_s1));
+//        cerr << "state_judge " << mi_s0 <<' ' << mi_s1<<' '<<s.s0_index.first/2 <<' '<<s.s0_index.second/2<<' '<<s.s1_index.first/2<<' '<<s.s1_index.second/2 << endl;
 //        if(iss0){//run s0
-           cerr <<"s0 win rate "<< s.s0_index.first/2 << ' ' << s.s0_index.second/2 << ' ' <<(mi_s1)/(mi_s0)<<endl;
+//        cerr <<"s0 win rate "<< s.s0_index.first/2 << ' ' << s.s0_index.second/2 << ' ' <<(mi_s1)/(mi_s0)<<endl;
 //            return (mi_s1)/(mi_s0);
 //        }
 //        else{
-            cerr <<"s1 win rate "<< s.s1_index.first/2 << ' ' << s.s1_index.second/2 << ' ' <<(mi_s0)/(mi_s1)<<endl;
+//        cerr <<"s1 win rate "<< s.s1_index.first/2 << ' ' << s.s1_index.second/2 << ' ' <<(mi_s0)/(mi_s1)<<endl;
 //            return (mi_s0)/(mi_s0);
 //        }
-return ans;
+        return ans;
     }
 
     Ans Simulation(const State &s, bool iss0) {
-        State s0 = s;
-        bool win;
-        int i;
-        bool a = iss0;
-         return  judge_state(s0 ,iss0);
-        for (i = 0; i < SIMULATION; ++i) {
-            ++cnt;
-            std::vector<State> v = next_step(s0, a);
-            int size = v.size();
-//            cerr <<size <<' '<<a<< "simulation " << s0.s0_index.first/2 << ' ' << s0.s0_index.second/2<<' ' << s0.s1_index.first/2<<' '<<s0.s1_index.second/2 <<' '<<s0.s1_board_num<<' '<<s0.s0_board_num<< endl;
-            int seed = mt_rand() % size;
-            s0 = v[seed];
-//            if (s0.s0_index.first == 0) {
-//                if (!iss0)win = false;
-//                else win = true;
-//                break;
-//            } else if (s0.s1_index.first == 16) {
-//                if (!iss0)win = true;
-//                else win = false;
-//                break;
-//            }
-            a = !a;
-        }
-//        return judge_state(s0,iss0);
-//        if (i == SIMULATION){
-//            cerr << "calculate " << endl;
-//            cerr << "board "<<s0.s0_board_num<<' '<<s0.s1_board_num << endl;
-            return  judge_state(s0,iss0);
-//        }
-//        cerr << "@@@@" << endl;
-//        return win;
+        ++tree_depth;
+        ++num_simulate;
+        return  judge_state(s ,iss0);
     }//win lose unable
 
     std::pair<int, std::pair<int, int>> Tree_search() {
         debug = 0;
-        while(double(clock()-time_)/CLOCKS_PER_SEC<1.95){
-//            cerr << clock()<<"%%%%" << endl;
+        num_simulate=0;
+        while(double(clock()-time_)/CLOCKS_PER_SEC<1.98){
+            tree_depth=0;
             Selection(state, !ai_side);
             tree[state].N++;
+//            cerr << "DEPTH " << tree_depth << endl;
         }
+        cerr << "SIMULATE " << num_simulate << endl;
         int ma = 0;
         double uct=1e9;
-        State ans;
+        int index;
+        int i_=0;
         for (auto i = tree[state].son.begin(); i != tree[state].son.end(); ++i) {
 //            if(tree[*i].ismet)tree[*i].UCT=cal_UCT(tree[*i].N,tree[*i].Q,tree[state].N);
             if (tree[*i].N > ma||tree[*i].N==ma&&tree[*i].UCT>uct) {
-                ans = *i;
+                index=i_;
                 ma = tree[*i].N;
                 uct=tree[*i].UCT;
             }
+            ++i_;
         }
-        std::pair<int, std::pair<int, int>> loc = ans.action;
+        std::pair<int, std::pair<int, int>> loc = tree[state].son[index].action;
         cerr << "-------UCT-------" << tree[state].N << endl;
         for (auto i = tree[state].son.begin(); i != tree[state].son.end(); ++i) {
             cerr << tree[*i].UCT << ' ' << tree[*i].Q << ' ' << tree[*i].N << ' ' << (*i).action.first << ' '
@@ -933,13 +888,12 @@ return ans;
 //        cerr << "ans " << tree[state].prefer_son.s0_index.first/2 << ' ' <<tree[state].prefer_son.s0_index.second/2 << ' ' << tree[state].prefer_son.s1_index.first/2
 //             <<' ' << tree[state].prefer_son.s1_index.second/2 << endl;
         cerr << "action " << loc.first << ' ' << loc.second.first << ' ' << loc.second.second << endl;
-        state = ans;
+        state=tree[state].son[index];
         return loc;
     }
 } monte_tree;
 
 std::pair<int, std::pair<int, int> > action(std::pair<int, std::pair<int, int> > loc) {
-    cnt=0;
     time_=clock();
 //    cerr << ai_side << "()()" << endl;
 //    ++STEP;
@@ -958,11 +912,6 @@ std::pair<int, std::pair<int, int> > action(std::pair<int, std::pair<int, int> >
     }
     state.step++;
     std::pair<int, std::pair<int, int>> loc0;
-//    if(state.step==1&&!ai_side){
-//        loc0=make_pair(2,make_pair(0,3));
-//        state.add_board(make_pair(2,make_pair(0,3)));
-//        --state.s0_board_num;
-//    }
     if (ai_side && !state.s1_board_num || !ai_side && !state.s0_board_num) {
         loc0 = shortest_path(state, !ai_side);
         if (ai_side)state.s1_index = map_node(loc0.second);
