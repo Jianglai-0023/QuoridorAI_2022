@@ -701,7 +701,7 @@ std::vector<State> next_step(const State &s, bool iss0) {//走s0
 class Monte_Tree {
 public:
     double cal_UCT(double Ni, double Qi, double N) {
-        return ((Qi / Ni) + 1.4 * pow(log(N) / Ni, 0.5));
+        return ((Qi / Ni) + 1.3 * pow((log(N) / Ni), 0.5));
     }
 
     Ans Selection(const State &s,const bool iss0) {//<win,UCTofson> //if 当前局面走的是s0
@@ -739,7 +739,7 @@ public:
             }
         }
         if(tree[s].isexpanded){
-//            cerr << "expanded!" <<s.step<< endl;
+            cerr << "expanded!" <<s.step<< endl;
             double max_uct = 0;
             for (auto i = tree[s].son.begin(); i != tree[s].son.end(); ++i) {//update UCT
                 tree[*i].UCT = cal_UCT(tree[*i].N, tree[*i].Q, tree[s].N + 1);
@@ -805,11 +805,34 @@ public:
                     if(x+dx[i]>=0&&x+dx[i]<=16&&y+dy[i]>=0&&y+dy[i]<=16&&!s.b[x+dx[i]][y+dy[i]]){
                         int x_=x+2*dx[i];
                         int y_=y+2*dy[i];
-                        if(dist[x_][y_]>dist[x][y]+1){
+                        if(h==2&&(make_pair(x_,y_)==s.s0_index||make_pair(x_,y_)==s.s1_index)){//TODO 可以跳的情况
+                            if(x_+dx[i]>=1&&x_+dx[i]<=15&&y_+dy[i]>=1&&y_+dy[i]<=15&&
+                            !s.b[x_+dx[i]][y_+dy[i]]&&
+                            dist[x_+2*dx[i]][y_+2*dy[i]]>dist[x][y]+1){
+                              dist[x_+2*dx[i]][y_+2*dy[i]]=dist[x][y]+1;
+                              q[++t]=make_pair(x_+2*dx[i],y_+2*dy[i]);
+                            }
+                            else if(dist[x_+2*dx[i]][y_+2*dy[i]]>dist[x][y]+1){
+                                int dx_=dy[i];
+                                int dy_=dx[i];
+                                for(int j = 0; j < 2; ++j){
+                                    if(x_+dx_>=1&&x_+dx_<=15&&y_+dy_>=1&&y_+dy_<=15&&
+                                    !s.b[x_+dx_][y_+dy_]&&
+                                    dist[x_+2*dx_][y_+2*dy_]<dist[x][y]+1){
+                                        dist[x_+2*dx_][y_+2*dy_]=dist[x][y]+1;
+                                        q[++t]=make_pair(x_+2*dx_,y_+2*dy_);
+                                    }
+                                    dx_=-dx_;
+                                    dy_=-dy_;
+                                }
+                            }
+                        }
+                        else if(dist[x_][y_]>dist[x][y]+1){
                             dist[x_][y_]=dist[x][y]+1;
                             q[++t]= make_pair(x_,y_);
                         }
                     }
+
                 }
             }
             if(!flag){
@@ -835,8 +858,8 @@ public:
 //        cerr << "hereee" << endl;
 //if(s.b[11][7])cerr << "QWWQ" << endl;
 Ans ans;
-        ans.s0win=mi_s1/mi_s0;
-        ans.s1win=mi_s0/mi_s1;
+        ans.s0win=(mi_s1/(mi_s0*1.1));
+        ans.s1win=(mi_s0/(mi_s1*1.1));
 cerr << "state_judge " << mi_s0 <<' ' << mi_s1<<' '<<s.s0_index.first/2 <<' '<<s.s0_index.second/2<<' '<<s.s1_index.first/2<<' '<<s.s1_index.second/2 << endl;
 //        if(iss0){//run s0
            cerr <<"s0 win rate "<< s.s0_index.first/2 << ' ' << s.s0_index.second/2 << ' ' <<(mi_s1)/(mi_s0)<<endl;
@@ -935,6 +958,11 @@ std::pair<int, std::pair<int, int> > action(std::pair<int, std::pair<int, int> >
     }
     state.step++;
     std::pair<int, std::pair<int, int>> loc0;
+//    if(state.step==1&&!ai_side){
+//        loc0=make_pair(2,make_pair(0,3));
+//        state.add_board(make_pair(2,make_pair(0,3)));
+//        --state.s0_board_num;
+//    }
     if (ai_side && !state.s1_board_num || !ai_side && !state.s0_board_num) {
         loc0 = shortest_path(state, !ai_side);
         if (ai_side)state.s1_index = map_node(loc0.second);
