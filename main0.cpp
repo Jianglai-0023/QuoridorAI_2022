@@ -475,46 +475,48 @@ void next_step(const State &s, bool iss0, vector<State> &v) {//走s0
             int y = s.s0_index.second;
             int dx_=-1;
             if(x+dx_>=1&&x+dx_<=15){
-                for(int i = 1; i <= 15; i+=2){
-                    if(!s.b[x+dx_][i]&&!s.b[x+dx_][i-1]&&!s.b[x+dx_][i+1]&&
-                       bfs(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)),s)){//horizon
-                        S=s;
-                        S.step=s.step+1;
-                        S.action= make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1));
-                        S.add_board(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)));
-                        --S.s1_board_num;
-                        v.push_back(S);
-                    }
-                    else if(x+3*dx_>=1&&x+3*dx_<=15&&
-                            !s.b[x+3*dx_][i]&&!s.b[x+3*dx_][i-1]&&!s.b[x+3*dx_][i+1]&&
-                            bfs(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)),s)){
-                        S=s;
-                        S.step=s.step+1;
-                        S.action=make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1));
-                        S.add_board(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)));
-                        --S.s1_board_num;
-                        v.push_back(S);
-                    }
-                    if(x-1>=1&&x-1<=15){//vertical
-                        if(!s.b[x-1][i]&&!s.b[x][i]&&!s.b[x-2][i]&&
-                           bfs(make_pair(1,make_pair((x-2)>>1,(i-1)>>1)),s)){
+                for(int i = y-3; i <= y+3; i+=2){
+                    if(i>=1&&i<=15){
+                        if(!s.b[x+dx_][i]&&!s.b[x+dx_][i-1]&&!s.b[x+dx_][i+1]&&
+                           bfs(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)),s)){//horizon
                             S=s;
                             S.step=s.step+1;
-                            S.action=make_pair(1,make_pair((x-2)>>1,(i-1)>>1));
-                            S.add_board(make_pair(1,make_pair((x-2)>>1,(i-1)>>1)));
+                            S.action= make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1));
+                            S.add_board(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)));
                             --S.s1_board_num;
                             v.push_back(S);
                         }
-                    }
-                    if(x+1>=1&&x+1<=15){
-                        if(!s.b[x+1][i]&&!s.b[x][i]&&!s.b[x+2][i]&&
-                           bfs(make_pair(1,make_pair(x>>1,(i-1)>>1)),s)){
+                        else if(x+3*dx_>=1&&x+3*dx_<=15&&
+                                !s.b[x+3*dx_][i]&&!s.b[x+3*dx_][i-1]&&!s.b[x+3*dx_][i+1]&&
+                                bfs(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)),s)){
                             S=s;
                             S.step=s.step+1;
-                            S.action=make_pair(1,make_pair(x>>1,(i-1)>>1));
-                            S.add_board(make_pair(1,make_pair(x>>1,(i-1)>>1)));
+                            S.action=make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1));
+                            S.add_board(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)));
                             --S.s1_board_num;
                             v.push_back(S);
+                        }
+                        if(x-1>=1&&x-1<=15){//vertical
+                            if(!s.b[x-1][i]&&!s.b[x][i]&&!s.b[x-2][i]&&
+                               bfs(make_pair(1,make_pair((x-2)>>1,(i-1)>>1)),s)){
+                                S=s;
+                                S.step=s.step+1;
+                                S.action=make_pair(1,make_pair((x-2)>>1,(i-1)>>1));
+                                S.add_board(make_pair(1,make_pair((x-2)>>1,(i-1)>>1)));
+                                --S.s1_board_num;
+                                v.push_back(S);
+                            }
+                        }
+                        if(x+1>=1&&x+1<=15){
+                            if(!s.b[x+1][i]&&!s.b[x][i]&&!s.b[x+2][i]&&
+                               bfs(make_pair(1,make_pair(x>>1,(i-1)>>1)),s)){
+                                S=s;
+                                S.step=s.step+1;
+                                S.action=make_pair(1,make_pair(x>>1,(i-1)>>1));
+                                S.add_board(make_pair(1,make_pair(x>>1,(i-1)>>1)));
+                                --S.s1_board_num;
+                                v.push_back(S);
+                            }
                         }
                     }
                 }
@@ -523,48 +525,51 @@ void next_step(const State &s, bool iss0, vector<State> &v) {//走s0
             x=s.s1_index.first;
             y=s.s1_index.second;
             if(x+dx_>=1&&x+dx_<=15){
-                for(int i = 1; i <= 15; i+=2){
-                    if(!s.b[x+dx_][i]&&!s.b[x+dx_][i-1]&&!s.b[x+dx_][i+1]&&
-                       bfs(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)),s)){
-                        S=s;
-                        S.step=s.step+1;
-                        S.action= make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1));
-                        S.add_board(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)));
-                        --S.s1_board_num;
-                        v.push_back(S);
-                    }
-                    else if(x+3*dx_>=1&&x+3*dx_<=15&&
-                            !s.b[x+3*dx_][i]&&!s.b[x+3*dx_][i-1]&&!s.b[x+3*dx_][i+1]&&
-                            bfs(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)),s)){
-                        S=s;
-                        S.step=s.step+1;
-                        S.action=make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1));
-                        S.add_board(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)));
-                        --S.s1_board_num;
-                        v.push_back(S);
-                    }
-                    if(x+2>=1&&x+2<=15){//vertical
-                        if(!s.b[x+1][i]&&!s.b[x+2][i]&&!s.b[x+3][i]&&
-                           bfs(make_pair(1,make_pair((x+1)>>1,(i-1)>>1)),s)){
-                            S=s;
-                            S.step=s.step+1;
-                            S.action=make_pair(1,make_pair((x+1)>>1,(i-1)>>1));
-                            S.add_board(make_pair(1,make_pair((x+1)>>1,(i-1)>>1)));
-                            --S.s1_board_num;
-                            v.push_back(S);
+                for(int i = y-3; i <= y+3; i+=2){
+                    if(i>=1&&i<=15){
+//                        if(!s.b[x+dx_][i]&&!s.b[x+dx_][i-1]&&!s.b[x+dx_][i+1]&&
+//                           bfs(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)),s)){
+//                            S=s;
+//                            S.step=s.step+1;
+//                            S.action= make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1));
+//                            S.add_board(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)));
+//                            --S.s1_board_num;
+//                            v.push_back(S);
+//                        }
+//                        else if(x+3*dx_>=1&&x+3*dx_<=15&&
+//                                !s.b[x+3*dx_][i]&&!s.b[x+3*dx_][i-1]&&!s.b[x+3*dx_][i+1]&&
+//                                bfs(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)),s)){
+//                            S=s;
+//                            S.step=s.step+1;
+//                            S.action=make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1));
+//                            S.add_board(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)));
+//                            --S.s1_board_num;
+//                            v.push_back(S);
+//                        }
+                        if(x+2>=1&&x+2<=15){//vertical
+                            if(!s.b[x+1][i]&&!s.b[x+2][i]&&!s.b[x+3][i]&&
+                               bfs(make_pair(1,make_pair((x+1)>>1,(i-1)>>1)),s)){
+                                S=s;
+                                S.step=s.step+1;
+                                S.action=make_pair(1,make_pair((x+1)>>1,(i-1)>>1));
+                                S.add_board(make_pair(1,make_pair((x+1)>>1,(i-1)>>1)));
+                                --S.s1_board_num;
+                                v.push_back(S);
+                            }
+                        }
+                        if(x+1>=1&&x+1<=15){
+                            if(!s.b[x+1][i]&&!s.b[x][i]&&!s.b[x+2][i]&&
+                               bfs(make_pair(1,make_pair(x>>1,(i-1)>>1)),s)){
+                                S=s;
+                                S.step=s.step+1;
+                                S.action=make_pair(1,make_pair(x>>1,(i-1)>>1));
+                                S.add_board(make_pair(1,make_pair(x>>1,(i-1)>>1)));
+                                --S.s1_board_num;
+                                v.push_back(S);
+                            }
                         }
                     }
-                    if(x+1>=1&&x+1<=15){
-                        if(!s.b[x+1][i]&&!s.b[x][i]&&!s.b[x+2][i]&&
-                           bfs(make_pair(1,make_pair(x>>1,(i-1)>>1)),s)){
-                            S=s;
-                            S.step=s.step+1;
-                            S.action=make_pair(1,make_pair(x>>1,(i-1)>>1));
-                            S.add_board(make_pair(1,make_pair(x>>1,(i-1)>>1)));
-                            --S.s1_board_num;
-                            v.push_back(S);
-                        }
-                    }
+
                 }
             }
         }
@@ -575,46 +580,48 @@ void next_step(const State &s, bool iss0, vector<State> &v) {//走s0
             int y = s.s1_index.second;
             int dx_=1;
             if(x+dx_>=1&&x+dx_<=15){
-                for(int i = 1; i <= 15; i+=2){
-                    if(!s.b[x+dx_][i]&&!s.b[x+dx_][i-1]&&!s.b[x+dx_][i+1]&&
-                       bfs(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)),s)){//horizon
-                        S=s;
-                        S.step=s.step+1;
-                        S.action= make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1));
-                        S.add_board(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)));
-                        --S.s0_board_num;
-                        v.push_back(S);
-                    }
-                    else if(x+3*dx_>=1&&x+3*dx_<=15&&
-                            !s.b[x+3*dx_][i]&&!s.b[x+3*dx_][i-1]&&!s.b[x+3*dx_][i+1]&&
-                            bfs(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)),s)){
-                        S=s;
-                        S.step=s.step+1;
-                        S.action=make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1));
-                        S.add_board(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)));
-                        --S.s0_board_num;
-                        v.push_back(S);
-                    }
-                    if(x-1>=1&&x-1<=15){//vertical
-                        if(!s.b[x-1][i]&&!s.b[x][i]&&!s.b[x-2][i]&&
-                           bfs(make_pair(1,make_pair((x-2)>>1,(i-1)>>1)),s)){
+                for(int i = y-3; i <= y+3; i+=2){
+                    if(i>=1&&i<=15){
+                        if(!s.b[x+dx_][i]&&!s.b[x+dx_][i-1]&&!s.b[x+dx_][i+1]&&
+                           bfs(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)),s)){//horizon
                             S=s;
                             S.step=s.step+1;
-                            S.action=make_pair(1,make_pair((x-2)>>1,(i-1)>>1));
-                            S.add_board(make_pair(1,make_pair((x-2)>>1,(i-1)>>1)));
+                            S.action= make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1));
+                            S.add_board(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)));
                             --S.s0_board_num;
                             v.push_back(S);
                         }
-                    }
-                    if(x+1>=1&&x+1<=15){
-                        if(!s.b[x+1][i]&&!s.b[x][i]&&!s.b[x+2][i]&&
-                           bfs(make_pair(1,make_pair(x>>1,(i-1)>>1)),s)){
+                        else if(x+3*dx_>=1&&x+3*dx_<=15&&
+                                !s.b[x+3*dx_][i]&&!s.b[x+3*dx_][i-1]&&!s.b[x+3*dx_][i+1]&&
+                                bfs(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)),s)){
                             S=s;
                             S.step=s.step+1;
-                            S.action=make_pair(1,make_pair(x>>1,(i-1)>>1));
-                            S.add_board(make_pair(1,make_pair(x>>1,(i-1)>>1)));
+                            S.action=make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1));
+                            S.add_board(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)));
                             --S.s0_board_num;
                             v.push_back(S);
+                        }
+                        if(x-1>=1&&x-1<=15){//vertical
+                            if(!s.b[x-1][i]&&!s.b[x][i]&&!s.b[x-2][i]&&
+                               bfs(make_pair(1,make_pair((x-2)>>1,(i-1)>>1)),s)){
+                                S=s;
+                                S.step=s.step+1;
+                                S.action=make_pair(1,make_pair((x-2)>>1,(i-1)>>1));
+                                S.add_board(make_pair(1,make_pair((x-2)>>1,(i-1)>>1)));
+                                --S.s0_board_num;
+                                v.push_back(S);
+                            }
+                        }
+                        if(x+1>=1&&x+1<=15){
+                            if(!s.b[x+1][i]&&!s.b[x][i]&&!s.b[x+2][i]&&
+                               bfs(make_pair(1,make_pair(x>>1,(i-1)>>1)),s)){
+                                S=s;
+                                S.step=s.step+1;
+                                S.action=make_pair(1,make_pair(x>>1,(i-1)>>1));
+                                S.add_board(make_pair(1,make_pair(x>>1,(i-1)>>1)));
+                                --S.s0_board_num;
+                                v.push_back(S);
+                            }
                         }
                     }
                 }
@@ -623,46 +630,48 @@ void next_step(const State &s, bool iss0, vector<State> &v) {//走s0
             x=s.s0_index.first;
             y=s.s0_index.second;
             if(x+dx_>=1&&x+dx_<=15){
-                for(int i = 1; i <= 15; i+=2){
-                    if(!s.b[x+dx_][i]&&!s.b[x+dx_][i-1]&&!s.b[x+dx_][i+1]&&//horizon
-                       bfs(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)),s)){
-                        S=s;
-                        S.step=s.step+1;
-                        S.action= make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1));
-                        S.add_board(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)));
-                        --S.s0_board_num;
-                        v.push_back(S);
-                    }
-                    else if(x+3*dx_>=1&&x+3*dx_<=15&&
-                            !s.b[x+3*dx_][i]&&!s.b[x+3*dx_][i-1]&&!s.b[x+3*dx_][i+1]&&
-                            bfs(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)),s)){
-                        S=s;
-                        S.step=s.step+1;
-                        S.action=make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1));
-                        S.add_board(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)));
-                        --S.s0_board_num;
-                        v.push_back(S);
-                    }
-                    if(x-2>=1&&x-2<=15){//vertical
-                        if(!s.b[x-1][i]&&!s.b[x-2][i]&&!s.b[x-3][i]&&
-                           bfs(make_pair(1,make_pair((x-3)>>1,(i-1)>>1)),s)){
-                            S=s;
-                            S.step=s.step+1;
-                            S.action=make_pair(1,make_pair((x-3)>>1,(i-1)>>1));
-                            S.add_board(make_pair(1,make_pair((x-3)>>1,(i-1)>>1)));
-                            --S.s0_board_num;
-                            v.push_back(S);
+                for(int i = y-3; i <= y+3; i+=2){
+                    if(i>=1&&i<=15){
+//                        if(!s.b[x+dx_][i]&&!s.b[x+dx_][i-1]&&!s.b[x+dx_][i+1]&&//horizon
+//                           bfs(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)),s)){
+//                            S=s;
+//                            S.step=s.step+1;
+//                            S.action= make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1));
+//                            S.add_board(make_pair(2,make_pair((x+dx_-1)>>1,(i-1)>>1)));
+//                            --S.s0_board_num;
+//                            v.push_back(S);
+//                        }
+//                        else if(x+3*dx_>=1&&x+3*dx_<=15&&
+//                                !s.b[x+3*dx_][i]&&!s.b[x+3*dx_][i-1]&&!s.b[x+3*dx_][i+1]&&
+//                                bfs(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)),s)){
+//                            S=s;
+//                            S.step=s.step+1;
+//                            S.action=make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1));
+//                            S.add_board(make_pair(2,make_pair((x+3*dx_-1)>>1,(i-1)>>1)));
+//                            --S.s0_board_num;
+//                            v.push_back(S);
+//                        }
+                        if(x-2>=1&&x-2<=15){//vertical
+                            if(!s.b[x-1][i]&&!s.b[x-2][i]&&!s.b[x-3][i]&&
+                               bfs(make_pair(1,make_pair((x-3)>>1,(i-1)>>1)),s)){
+                                S=s;
+                                S.step=s.step+1;
+                                S.action=make_pair(1,make_pair((x-3)>>1,(i-1)>>1));
+                                S.add_board(make_pair(1,make_pair((x-3)>>1,(i-1)>>1)));
+                                --S.s0_board_num;
+                                v.push_back(S);
+                            }
                         }
-                    }
-                    if(x-1>=1&&x-1<=15){
-                        if(!s.b[x-1][i]&&!s.b[x][i]&&!s.b[x-2][i]&&
-                           bfs(make_pair(1,make_pair((x-2)>>1,(i-1)>>1)),s)){
-                            S=s;
-                            S.step=s.step+1;
-                            S.action=make_pair(1,make_pair((x-2)>>1,(i-1)>>1));
-                            S.add_board(make_pair(1,make_pair((x-2)>>1,(i-1)>>1)));
-                            --S.s0_board_num;
-                            v.push_back(S);
+                        if(x-1>=1&&x-1<=15){
+                            if(!s.b[x-1][i]&&!s.b[x][i]&&!s.b[x-2][i]&&
+                               bfs(make_pair(1,make_pair((x-2)>>1,(i-1)>>1)),s)){
+                                S=s;
+                                S.step=s.step+1;
+                                S.action=make_pair(1,make_pair((x-2)>>1,(i-1)>>1));
+                                S.add_board(make_pair(1,make_pair((x-2)>>1,(i-1)>>1)));
+                                --S.s0_board_num;
+                                v.push_back(S);
+                            }
                         }
                     }
                 }
@@ -679,7 +688,7 @@ void next_step(const State &s, bool iss0, vector<State> &v) {//走s0
 class Monte_Tree {
 public:
     double cal_UCT(double Ni, double Qi, double N) {
-        return ((Qi / Ni) + 1.41 * pow(log(N) / Ni, 0.5));
+        return ((Qi / Ni) + 0.41 * pow(log(N) / Ni, 0.5));
     }
 
     Ans Selection(const State &s,const bool iss0) {//<win,UCTofson> //if 当前局面走的是s0
@@ -694,7 +703,7 @@ public:
 //            cerr << "size " << tree[s].son.size() << endl;
         }
         else if (!tree[s].isexpanded) {
-            cerr << "not expanded! " << s.step << endl;
+//            cerr << "not expanded! " << s.step << endl;
             auto i=tree[s].head;
             for (; i != tree[s].son.end(); ++i) {
 //                cerr << "qwqqq "<<endl;
@@ -705,7 +714,7 @@ public:
                     tree[*i].ismet = true;
                     next_step(*i, !iss0,tree[*i].son);
                     tree[*i].UCT = cal_UCT(tree[*i].N++, tree[*i].Q += q,
-                                                           tree[s].N + 1);
+                                           tree[s].N + 1);
                     tree[*i].head=tree[*i].son.begin();
                     tree[s].head=++i;
                     return ans;
@@ -717,7 +726,7 @@ public:
             }
         }
         if(tree[s].isexpanded){
-            cerr << "expanded!" <<s.step<< endl;
+//            cerr << "expanded!" <<s.step<< endl;
             double max_uct = 0;
             int index;
             int i_=0;
