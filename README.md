@@ -10,7 +10,7 @@ Rules:You need to control your cheese and ten boards, trying to make your cheese
 ![GameScenen](https://raw.githubusercontent.com/Jianglai-0023/QuoridorAI_2022/main/images/%E6%88%AA%E5%B1%8F2022-07-17%2001.11.51%E7%9A%84%E5%89%AF%E6%9C%AC.png?token=GHSAT0AAAAAABTUJ5JEADPJJYXSIX4HK6BSYWTAUAQ)
 <center>Game Secene</center>
 
-![Legal Jump](https://raw.githubusercontent.com/Jianglai-0023/QuoridorAI_2022/main/images/%E6%88%AA%E5%B1%8F2022-07-17%2001.11.51%E7%9A%84%E5%89%AF%E6%9C%AC.png?token=GHSAT0AAAAAABTUJ5JEADPJJYXSIX4HK6BSYWTAUAQ)
+![Legal Jump](https://raw.githubusercontent.com/Jianglai-0023/QuoridorAI_2022/main/images/%E6%88%AA%E5%B1%8F2022-07-17%2002.28.31.png?token=GHSAT0AAAAAABTUJ5JEEX5AKSTLRSM72WCOYWTAZLQ)
 <center>Legal Jump</center>
 
 ###### Technique
@@ -42,7 +42,7 @@ MCTS  includes four steps:
 #### 4. My TimeLine
 * week1.1-week1.2 understand the game, writing the simulation part
 * week1.2-1.4 understanding the algorithem and implement it.
-* week1.5-2.3 fixed bugs
+  * week1.5-2.3 fixed bugs
 * week2.3-2.5 optimzing
 
   MCTS didn't chosen by many of us. With a lot of details, it's uneasy to make it out without dicussion. Because my understanding isn't that deep, I didn't fully understand the algorithem and ignore the shortage I have mentioned befour.
