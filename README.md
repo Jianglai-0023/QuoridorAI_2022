@@ -7,9 +7,9 @@ First time to learn about AI related knowledge, my understanding might be naive.
 *Language Support: c++*
 #### 1. Simulation
 Rules:You need to control your cheese and ten boards, trying to make your cheese reach the bottom line first.
-![GameScenen]([https://github.com/Jianglai-0023/QuoridorAI_2022/blob/main/images/%E6%88%AA%E5%B1%8F2022-07-17%2001.11.51%E7%9A%84%E5%89%AF%E6%9C%AC.png])
+![GameScenen](https://raw.githubusercontent.com/Jianglai-0023/QuoridorAI_2022/main/images/%E6%88%AA%E5%B1%8F2022-07-17%2001.11.51%E7%9A%84%E5%89%AF%E6%9C%AC.png?token=GHSAT0AAAAAABTUJ5JEADPJJYXSIX4HK6BSYWTAUAQ)
 *Game Secene*
-![Legal Jump]([https://github.com/Jianglai-0023/QuoridorAI_2022/blob/main/images/%E6%88%AA%E5%B1%8F2022-07-17%2002.28.31.png])
+![Legal Jump](https://raw.githubusercontent.com/Jianglai-0023/QuoridorAI_2022/main/images/%E6%88%AA%E5%B1%8F2022-07-17%2001.11.51%E7%9A%84%E5%89%AF%E6%9C%AC.png?token=GHSAT0AAAAAABTUJ5JEADPJJYXSIX4HK6BSYWTAUAQ)
 *Legal Jump*
 ###### Technique
 * you can use two `unsigned long`to simulate board , which is 64(8x8) bits long. It might accelerated your code.
@@ -22,7 +22,7 @@ MCTS  includes four steps:
 * Simulation
 * Backpropagation
   Befor you choose your next step based on current state, you need to repeated *N* times the steps below:
-  ![MCTS](https://github.com/Jianglai-0023/QuoridorAI_2022/blob/main/images/%E6%88%AA%E5%B1%8F2022-07-17%2002.29.32.png)
+  ![MCTS](https://raw.githubusercontent.com/Jianglai-0023/QuoridorAI_2022/main/images/%E6%88%AA%E5%B1%8F2022-07-17%2002.29.32.png?token=GHSAT0AAAAAABTUJ5JF3SKI667OBIP2XSIKYWTAVTQ)
 
 **Selection:** From the current state, you're going to choose a son with the highest UCT and move to it.Keep doing it until you reach a node whose son are not being met thoroghly(Unexpanded Node).
 **Expansion:**  When you are on an unexpanded node, choose a son which is unmet  randomly .
