@@ -8,9 +8,11 @@ First time to learn about AI related knowledge, my understanding might be naive.
 #### 1. Simulation
 Rules:You need to control your cheese and ten boards, trying to make your cheese reach the bottom line first.
 ![GameScenen](https://raw.githubusercontent.com/Jianglai-0023/QuoridorAI_2022/main/images/%E6%88%AA%E5%B1%8F2022-07-17%2001.11.51%E7%9A%84%E5%89%AF%E6%9C%AC.png?token=GHSAT0AAAAAABTUJ5JEADPJJYXSIX4HK6BSYWTAUAQ)
-*Game Secene*
+<center>Game Secene</center>
+
 ![Legal Jump](https://raw.githubusercontent.com/Jianglai-0023/QuoridorAI_2022/main/images/%E6%88%AA%E5%B1%8F2022-07-17%2001.11.51%E7%9A%84%E5%89%AF%E6%9C%AC.png?token=GHSAT0AAAAAABTUJ5JEADPJJYXSIX4HK6BSYWTAUAQ)
-*Legal Jump*
+<center>Legal Jump</center>
+
 ###### Technique
 * you can use two `unsigned long`to simulate board , which is 64(8x8) bits long. It might accelerated your code.
 * use `class State`to record different state, which includes `ull board`,`pair(int,int)index`,`int rest_board`
@@ -23,7 +25,6 @@ MCTS  includes four steps:
 * Backpropagation
   Befor you choose your next step based on current state, you need to repeated *N* times the steps below:
   ![MCTS](https://raw.githubusercontent.com/Jianglai-0023/QuoridorAI_2022/main/images/%E6%88%AA%E5%B1%8F2022-07-17%2002.29.32.png?token=GHSAT0AAAAAABTUJ5JF3SKI667OBIP2XSIKYWTAVTQ)
-
 **Selection:** From the current state, you're going to choose a son with the highest UCT and move to it.Keep doing it until you reach a node whose son are not being met thoroghly(Unexpanded Node).
 **Expansion:**  When you are on an unexpanded node, choose a son which is unmet  randomly .
 **Simulation:** With the son you choose, randomly choose the next step until the game end.
@@ -38,10 +39,11 @@ MCTS  includes four steps:
 #### 3.Shortages of my first version
 * Distinguish same node from different fathers, didn't implement calculating UCT with different father's visit's time.
 * Low speed: Simulation about 10,000 times every 2 second, 8 times lowers than others.
-#### 4. my time line
+#### 4. My TimeLine
 * week1.1-week1.2 understand the game, writing the simulation part
 * week1.2-1.4 understanding the algorithem and implement it.
 * week1.5-2.3 fixed bugs
 * week2.3-2.5 optimzing
+
   MCTS didn't chosen by many of us. With a lot of details, it's uneasy to make it out without dicussion. Because my understanding isn't that deep, I didn't fully understand the algorithem and ignore the shortage I have mentioned befour.
   All in all, thanks to my TAs and teammates' selfless help.
