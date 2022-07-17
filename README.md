@@ -25,10 +25,10 @@ MCTS  includes four steps:
 * Backpropagation
   Befor you choose your next step based on current state, you need to repeated *N* times the steps below:
   ![MCTS](https://raw.githubusercontent.com/Jianglai-0023/QuoridorAI_2022/main/images/%E6%88%AA%E5%B1%8F2022-07-17%2002.29.32.png?token=GHSAT0AAAAAABTUJ5JEHY7RO5FUVBRTGE6WYWTQRNA)
-**Selection:** From the current state, you're going to choose a son with the highest UCT and move to it.Keep doing it until you reach a node whose son are not being met thoroghly(Unexpanded Node).
-**Expansion:**  When you are on an unexpanded node, choose a son which is unmet  randomly .
-**Simulation:** With the son you choose, randomly choose the next step until the game end.
-**Backpropagation:** Return the win(true) or loose(false) to every nodes on the path from Selection to Expansion and add their visit times.
+**Selection:** From the current state, you're going to choose a son with the highest UCT and move to it.Keep doing it until you reach a node whose son are not being met thoroghly(Unexpanded Node).  
+**Expansion:**  When you are on an unexpanded node, choose a son which is unmet  randomly.  
+**Simulation:** With the son you choose, randomly choose the next step until the game end.  
+**Backpropagation:** Return the win(true) or loose(false) to every nodes on the path from Selection to Expansion and add their visit times.  
 **Give your next action:** Choose the son with the highst time of visit as your action.
 **About UCT:** $UCT=\frac{Q_i}{N_i}+ \sqrt{\frac{logN_{father}}{N_i}}$
 #### Technique
