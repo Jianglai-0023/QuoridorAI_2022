@@ -13,7 +13,7 @@ Rules:You need to control your cheese and ten boards, trying to make your cheese
 ![Legal Jump](https://raw.githubusercontent.com/Jianglai-0023/QuoridorAI_2022/main/images/%E6%88%AA%E5%B1%8F2022-07-17%2002.28.31.png?token=GHSAT0AAAAAABTUJ5JFUI2BONSWBW2COCMYYWTQRAQ)
 <center>Legal Jump</center>
 
-###### Technique
+#### Technique
 * you can use two `unsigned long`to simulate board , which is 64(8x8) bits long. It might accelerated your code.
 * use `class State`to record different state, which includes `ull board`,`pair(int,int)index`,`int rest_board`
 ### 2. MCTS
