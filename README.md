@@ -22,7 +22,7 @@ MCTS  includes four steps:
 * Selection
 * Expansion
 * Simulation
-* Backpropagation
+* Backpropagation  
   Befor you choose your next step based on current state, you need to repeated *N* times the steps below:
   ![MCTS](https://raw.githubusercontent.com/Jianglai-0023/QuoridorAI_2022/main/images/%E6%88%AA%E5%B1%8F2022-07-17%2002.29.32.png?token=GHSAT0AAAAAABTUJ5JFHUSHIRG2Y36S3TFKYWTQ37A)
 **Selection:** From the current state, you're going to choose a son with the highest UCT and move to it.Keep doing it until you reach a node whose son are not being met thoroghly(Unexpanded Node).  
