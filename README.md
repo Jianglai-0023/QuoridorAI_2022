@@ -7,10 +7,10 @@ First time to learn about AI related knowledge, my understanding might be naive.
 *Language Support: c++*
 ### 1. Simulation
 Rules:You need to control your cheese and ten boards, trying to make your cheese reach the bottom line first.
-![GameScenen](https://raw.githubusercontent.com/Jianglai-0023/QuoridorAI_2022/main/images/%E6%88%AA%E5%B1%8F2022-07-17%2001.11.51%E7%9A%84%E5%89%AF%E6%9C%AC.png?token=GHSAT0AAAAAABTUJ5JE62ANUUFJAHJUPTC2YWTQPTA)
+![GameScenen](https://raw.githubusercontent.com/Jianglai-0023/QuoridorAI_2022/main/images/%E6%88%AA%E5%B1%8F2022-07-17%2001.11.51%E7%9A%84%E5%89%AF%E6%9C%AC.png?token=GHSAT0AAAAAABTUJ5JESQQ3KDSQJAZLIHPEYWTQ3IQ)
 <center>Game Secene</center>
 
-![Legal Jump](https://raw.githubusercontent.com/Jianglai-0023/QuoridorAI_2022/main/images/%E6%88%AA%E5%B1%8F2022-07-17%2002.28.31.png?token=GHSAT0AAAAAABTUJ5JFUI2BONSWBW2COCMYYWTQRAQ)
+![Legal Jump](https://raw.githubusercontent.com/Jianglai-0023/QuoridorAI_2022/main/images/%E6%88%AA%E5%B1%8F2022-07-17%2002.28.31.png?token=GHSAT0AAAAAABTUJ5JECAIHQ676SYOVPZRUYWTQ3WA)
 <center>Legal Jump</center>
 
 #### Technique
@@ -24,7 +24,7 @@ MCTS  includes four steps:
 * Simulation
 * Backpropagation
   Befor you choose your next step based on current state, you need to repeated *N* times the steps below:
-  ![MCTS](https://raw.githubusercontent.com/Jianglai-0023/QuoridorAI_2022/main/images/%E6%88%AA%E5%B1%8F2022-07-17%2002.29.32.png?token=GHSAT0AAAAAABTUJ5JEHY7RO5FUVBRTGE6WYWTQRNA)
+  ![MCTS](https://raw.githubusercontent.com/Jianglai-0023/QuoridorAI_2022/main/images/%E6%88%AA%E5%B1%8F2022-07-17%2002.29.32.png?token=GHSAT0AAAAAABTUJ5JFHUSHIRG2Y36S3TFKYWTQ37A)
 **Selection:** From the current state, you're going to choose a son with the highest UCT and move to it.Keep doing it until you reach a node whose son are not being met thoroghly(Unexpanded Node).  
 **Expansion:**  When you are on an unexpanded node, choose a son which is unmet  randomly.  
 **Simulation:** With the son you choose, randomly choose the next step until the game end.  
