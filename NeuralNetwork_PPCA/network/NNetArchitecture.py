@@ -44,13 +44,13 @@ class NNetArchitecture(nn.Module):
             nn.BatchNorm2d(32),
             nn.ReLU()
         )
-        self.layers4=nn.Sequential(
-            nn.Conv2d(in_channels=32,out_channels=128,kernel_size=5,padding=2),
-            nn.BatchNorm2d(128),
-            nn.ReLU()
-        )
-        self.output=nn.Linear(128*self.board_x*self.board_y,self.action_size)
-        print("qwq")
+        # self.layers4=nn.Sequential(
+        #     nn.Conv2d(in_channels=32,out_channels=128,kernel_size=5,padding=2),
+        #     nn.BatchNorm2d(128),
+        #     nn.ReLU()
+        # )
+        self.output=nn.Linear(32*self.board_x*self.board_y,self.action_size)
+        # print("qwq")
         for m in self.modules():
             if isinstance(m,nn.Linear):
                 init.xavier_normal_(m.weight.data)
@@ -90,7 +90,7 @@ class NNetArchitecture(nn.Module):
         s=self.layers1(s)
         s=self.layers2(s)
         s=self.layers3(s)
-        s=self.layers4(s)
+        # s=self.layers4(s)
         s=self.output(s.view(s.shape[0],-1))
 
         pi=s

@@ -17,7 +17,7 @@ from network.NNetArchitecture import NNetArchitecture as nnetarch
     TODO: Tune or add new arguments if you need
 """
 args = dotdict({
-    'lr': 0.005,
+    'lr': 0.004,
     'cuda': torch.cuda.is_available(),
     'feat_cnt': 3
 })
@@ -25,6 +25,7 @@ args = dotdict({
 class NNetWrapper():
     def __init__(self, game):
         self.nnet = nnetarch(game, args) #自定义的NetArchitech类
+        # self.nnet.cuda()
         self.feat_cnt = args.feat_cnt
         self.board_x, self.board_y = game.getBoardSize()
         self.action_size = game.getActionSize()
